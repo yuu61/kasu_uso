@@ -36,8 +36,6 @@ app.UseCookiePolicy();
 
 app.UseForwardedHeaders();
 
-app.UseHttpsRedirection();
-
 app.UseAntiforgery();
 
 app.UseStaticFiles();
