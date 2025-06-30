@@ -1,0 +1,40 @@
+name: CI/CD Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Publish
+      run: dotnet publish ./kasu_uso.csproj -c Release -o publish
+
+
+    - name: Copy files via SSH
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: tukushityann.net
+        username: hoge
+        key: ${{ secrets.HOGE_SERVER }}
+        source: "publish/*"
+        target: "/home/hoge/app/bin/Release/net8.0/publish/"
+
+    - name: Restart service
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: tukushityann.net
+        username: hoge
+        key: ${{ secrets.HOGE_SERVER }}
+        script: |
+          sudo systemctl restart blazor-app
