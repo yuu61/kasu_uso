@@ -29,8 +29,10 @@ jobs:
         host: tukushityann.net
         username: hoge
         key: ${{ secrets.HOGE_SERVER }}
-        source: "publish/."
+        source: "publish/"
         target: "/home/hoge/app/bin/Release/net8.0/publish/"
+        strip_components: 1
+        rm:  true
 
     - name: Restart service
       uses: appleboy/ssh-action@v0.1.7
