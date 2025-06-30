@@ -1,7 +1,91 @@
 ﻿@page "/"
+@inject HttpClient Http
 
-<PageTitle>Home</PageTitle>
+<div style="position: relative; height: 100vh;">
+    <!-- ChatGPT APIのレスポンスを画面中央に表示 -->
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+        @if (!string.IsNullOrEmpty(Response))
+        {
+            <p>@Response</p>
+        }
+    </div>
 
-<h1>Hello, world!</h1>
+    <!-- 画面中央下にテキストボックスと紙飛行機アイコンの送信ボタン -->
+    <div style="position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); display: flex; align-items: center;">
+        <input @bind="UserInput" placeholder="メッセージを入力..." style="width: 300px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+        <button @onclick="SendMessage" style="margin-left: 8px; background: none; border: none; cursor: pointer;">
+            <!-- 紙飛行機アイコン -->
+            <svg viewBox="0 0 24 24" width="24" height="24">
+                <path d="M2.01 21l19.99-9L2.01 3 2 10l15 2-15 2z" />
+            </svg>
+        </button>
+    </div>
 
-Welcome to your new app.
+    <!-- 下部に季節ラベルと月選択ドロップダウンを横並びで表示 -->
+    <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px;">
+        <span style="margin-top: 8px;">季節を選択</span>
+        <select @bind="SelectedMonth" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            <option value="Auto">自動</option>
+            @for (int i = 1; i <= 12; i++)
+            {
+                <option value="@i">@i 月</option>
+            }
+        </select>
+    </div>
+</div>
+
+@code {
+    private string Response { get; set; } = string.Empty;
+    private string UserInput { get; set; } = string.Empty;
+    private string SelectedMonth { get; set; } = "Auto";
+    private string? ApiKey;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // API_KEY.credentialファイルからAPIキーを読み込む
+        var path = Path.Combine(AppContext.BaseDirectory, "API_KEY.credential");
+        if (File.Exists(path))
+        {
+            ApiKey = (await File.ReadAllTextAsync(path)).Trim();
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(UserInput) || string.IsNullOrWhiteSpace(ApiKey)) return;
+
+        var systemPrompt = "あなたは『カスの嘘』を面白おかしく生成するAIアシスタントです。" +
+                           "以下の要件に沿って、すぐに嘘とわかるトリビア風のジョークを出力してください。\n" +
+                           "・フォーマット：\n" +
+                           "  <一文～数文>\n" +
+                           "・文体：\n" +
+                           "  - 専門用語や数字を交えつつも、3～10秒で「絶対ウソだ」と気づける荒唐無稽さ\n" +
+                           "  - 悪意や攻撃性はなく、純粋に笑える内容\n" +
+                           "  - 一ネタ完結型（長くなりすぎない）";
+        var userPrompt = $"キーワード: {UserInput}";
+        var messages = new[] {
+            new { role = "system", content = systemPrompt },
+            new { role = "user", content = userPrompt }
+        };
+        var payload = new
+        {
+            model = "gpt-4o-mini",
+            messages,
+            max_tokens = 200,
+            temperature = 0.8
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions")
+        {
+            Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
+
+        var result = await Http.SendAsync(request);
+        result.EnsureSuccessStatusCode();
+        var json = await result.Content.ReadAsStringAsync();
+        var doc = JsonDocument.Parse(json);
+        Response = doc.RootElement.GetProperty("choices")[0]
+            .GetProperty("message").GetProperty("content").GetString() ?? string.Empty;
+    }
+}
