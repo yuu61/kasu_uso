@@ -14,10 +14,22 @@
     <div style="position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); display: flex; align-items: center;">
         <input @bind="UserInput" placeholder="メッセージを入力..." style="width: 300px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
         <button @onclick="SendMessage" style="margin-left: 8px; background: none; border: none; cursor: pointer;">
-            <!-- 紙飛行機アイコン -->
-            <svg viewBox="0 0 24 24" width="24" height="24">
-                <path d="M2.01 21l19.99-9L2.01 3 2 10l15 2-15 2z" />
-            </svg>
+            @if (IsLoading)
+            {
+                <!-- ローディングアニメーション -->
+                <svg viewBox="0 0 50 50" width="24" height="24" class="spinner">
+                    <circle cx="25" cy="25" r="20" fill="none" stroke-width="5" stroke="#ccc" stroke-dasharray="31.4 31.4" stroke-linecap="round">
+                        <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" repeatCount="indefinite" />
+                    </circle>
+                </svg>
+            }
+            else
+            {
+                <!-- 紙飛行機アイコン -->
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                    <path d="M2.01 21l19.99-9L2.01 3 2 10l15 2-15 2z" />
+                </svg>
+            }
         </button>
     </div>
 
@@ -39,11 +51,13 @@
     private string UserInput { get; set; } = string.Empty;
     private string SelectedMonth { get; set; } = "Auto";
     private string? ApiKey;
+    private bool IsLoading { get; set; } = false;
 
     protected override async Task OnInitializedAsync()
     {
-        // API_KEY.credentialファイルからAPIキーを読み込む
-        var path = Path.Combine(AppContext.BaseDirectory, "API_KEY.credential");
+        // プロジェクトのルートディレクトリからAPIキーを読み込む
+        var rootPath = Directory.GetCurrentDirectory();
+        var path = Path.Combine(rootPath, "API_KEY.credential");
         if (File.Exists(path))
         {
             ApiKey = (await File.ReadAllTextAsync(path)).Trim();
@@ -54,38 +68,53 @@
     {
         if (string.IsNullOrWhiteSpace(UserInput) || string.IsNullOrWhiteSpace(ApiKey)) return;
 
-        var systemPrompt = "あなたは『カスの嘘』を面白おかしく生成するAIアシスタントです。" +
-                           "以下の要件に沿って、すぐに嘘とわかるトリビア風のジョークを出力してください。\n" +
-                           "・フォーマット：\n" +
-                           "  <一文～数文>\n" +
-                           "・文体：\n" +
-                           "  - 専門用語や数字を交えつつも、3～10秒で「絶対ウソだ」と気づける荒唐無稽さ\n" +
-                           "  - 悪意や攻撃性はなく、純粋に笑える内容\n" +
-                           "  - 一ネタ完結型（長くなりすぎない）";
-        var userPrompt = $"キーワード: {UserInput}";
-        var messages = new[] {
-            new { role = "system", content = systemPrompt },
-            new { role = "user", content = userPrompt }
-        };
-        var payload = new
-        {
-            model = "gpt-4o-mini",
-            messages,
-            max_tokens = 200,
-            temperature = 0.8
-        };
+        IsLoading = true;
+        try
+        {            
+            var systemPrompt = new StringBuilder();
+            systemPrompt.Append("あなたは『カスの嘘』を面白おかしく生成するAIアシスタントです。");
+            systemPrompt.Append("以下の要件に沿って、すぐに嘘とわかるトリビア風のジョークを出力してください。\n");
+            systemPrompt.Append("1. 入力テキストから季語を自動抽出してください。\n");
+            systemPrompt.Append("2. 季語が含まれない場合は");
+            systemPrompt.Append(SelectedMonth == "Auto"
+                ? $"{DateTime.Now.Month}月をもとに生成してください。\n"
+                : $"{SelectedMonth}月をもとに生成してください。\n");
+            systemPrompt.Append("3. 季節に関連した嘘トリビアを生成してください。\n");
+            systemPrompt.Append("・季語抽出や季節判定の説明（例: “XXXには季語が含まれていないので…”）は一切不要です。\n");
+            systemPrompt.Append("フォーマット:<一文～数文>\n");
+            systemPrompt.Append("専門用語や数字を交えつつも、3～10秒で「絶対ウソだ」と気づける荒唐無稽さ");
+            systemPrompt.Append("悪意や攻撃性はなく、純粋に笑える一ネタ完結型にしてください。");
+            systemPrompt.Append("適度に\nを挿入して改行");
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions")
-        {
-            Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
-        };
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
+            var userPrompt = $"キーワード: {UserInput}";
+            var messages = new[] {
+                new { role = "system", content = systemPrompt.ToString() },
+                new { role = "user", content = userPrompt }
+            };
+            var payload = new
+            {
+                model = "gpt-4.1-mini",
+                messages,
+                max_tokens = 200,
+                temperature = 0.8
+            };
 
-        var result = await Http.SendAsync(request);
-        result.EnsureSuccessStatusCode();
-        var json = await result.Content.ReadAsStringAsync();
-        var doc = JsonDocument.Parse(json);
-        Response = doc.RootElement.GetProperty("choices")[0]
-            .GetProperty("message").GetProperty("content").GetString() ?? string.Empty;
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions")
+            {
+                Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
+            };
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
+
+            var result = await Http.SendAsync(request);
+            result.EnsureSuccessStatusCode();
+            var json = await result.Content.ReadAsStringAsync();
+            var doc = JsonDocument.Parse(json);
+            Response = doc.RootElement.GetProperty("choices")[0]
+                .GetProperty("message").GetProperty("content").GetString() ?? string.Empty;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 }
