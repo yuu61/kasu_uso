@@ -32,6 +32,9 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
+
 app.UseForwardedHeaders();
 
 app.UseAntiforgery();
