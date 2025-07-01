@@ -7,6 +7,8 @@ builder.Services
     .AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddRazorPages();
+
 builder.Services.AddHttpClient("OpenAI", client =>
 {
     client.BaseAddress = new Uri("https://api.openai.com/");
@@ -33,7 +35,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
+app.MapFallbackToPage("/");
 
 app.UseForwardedHeaders();
 
