@@ -34,8 +34,10 @@ app.UseForwardedHeaders();
 app.UseStaticFiles();
 app.UseRouting();
 
-app.MapRazorPages();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
+
 app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
+
 
 app.Run();
