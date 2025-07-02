@@ -62,7 +62,10 @@
         var path = Path.Combine(rootPath, "API_KEY.credential");
         if (File.Exists(path))
         {
-            ApiKey = (await File.ReadAllTextAsync(path)).Trim();
+            ApiKey = (await File.ReadAllTextAsync(path))
+                .Replace("\r", "")
+                .Replace("\n", "")
+                .Trim();
         }
     }
 
@@ -70,11 +73,13 @@
     {
         if (string.IsNullOrWhiteSpace(UserInput) || string.IsNullOrWhiteSpace(ApiKey)) return;
 
+        // 念のためここでもAPIキーをクリーンアップ
+        var cleanApiKey = ApiKey.Replace("\r", "").Replace("\n", "").Trim();
         IsLoading = true;
         try
         {
             var systemPrompt = new StringBuilder();
-            systemPrompt.Append("あなたは『カスの嘘』を面白おかしく生成するAIアシスタントです。");
+            systemPrompt.Append("あなたは『カスの嘘』を面白おかしく生成するAIアシスタントです。\n");
             systemPrompt.Append("以下の要件に沿って、すぐに嘘とわかるトリビア風のジョークを出力してください。\n");
             systemPrompt.Append("1. 入力テキストから季語を自動抽出してください。\n");
             systemPrompt.Append("2. 季語が含まれない場合は");
@@ -84,9 +89,9 @@
             systemPrompt.Append("3. 季節に関連した嘘トリビアを生成してください。\n");
             systemPrompt.Append("・季語抽出や季節判定の説明（例: “XXXには季語が含まれていないので…”）は一切不要です。\n");
             systemPrompt.Append("フォーマット:<一文～数文>\n");
-            systemPrompt.Append("専門用語や数字を交えつつも、3～10秒で「絶対ウソだ」と気づける荒唐無稽さ");
-            systemPrompt.Append("悪意や攻撃性はなく、純粋に笑える一ネタ完結型にしてください。");
-            systemPrompt.Append("適度に改行文字LFを挿入して改行");
+            systemPrompt.Append("専門用語や数字を交えつつも、3～10秒で「絶対ウソだ」と気づける荒唐無稽さ\n");
+            systemPrompt.Append("悪意や攻撃性はなく、純粋に笑える一ネタ完結型にしてください。\n");
+            systemPrompt.Append("適度に改行文字LFを挿入して改行\n");
 
             var userPrompt = $"キーワード: {UserInput}";
             var messages = new[] {
@@ -105,7 +110,7 @@
             {
                 Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
             };
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", cleanApiKey);
 
             var result = await Http.SendAsync(request);
             result.EnsureSuccessStatusCode();
