@@ -7,8 +7,6 @@ builder.Services
     .AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddRazorPages();
-
 builder.Services.AddHttpClient("OpenAI", client =>
 {
     client.BaseAddress = new Uri("https://api.openai.com/");
@@ -20,12 +18,6 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
         ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 });
 
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
-builder.Logging.AddDebug();
-builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-
-
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -34,16 +26,13 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-
-app.UseStaticFiles();
-app.UseRouting();
-
-app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
-
 app.UseForwardedHeaders();
 
+app.UseHttpsRedirection();
+
 app.UseAntiforgery();
+
+app.UseStaticFiles();
 
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();
