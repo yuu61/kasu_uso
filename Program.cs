@@ -1,4 +1,4 @@
-﻿using kasu_uso.Components;
+using kasu_uso.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
