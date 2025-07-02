@@ -14,8 +14,10 @@ builder.Services.AddHttpClient("OpenAI", client =>
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
-    options.ForwardedHeaders =
-        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+                             | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
 });
 
 var app = builder.Build();
@@ -27,14 +29,11 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseForwardedHeaders();
-
-app.UseHttpsRedirection();
-
-app.UseAntiforgery();
-
 app.UseStaticFiles();
+app.UseRouting();
 
-app.MapRazorComponents<App>()
-   .AddInteractiveServerRenderMode();
+app.MapRazorPages();
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
 
 app.Run();
