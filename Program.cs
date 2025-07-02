@@ -34,14 +34,16 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+
+app.UseStaticFiles();
+app.UseRouting();
+
 app.MapBlazorHub();
-app.MapFallbackToPage("/");
+app.MapFallbackToPage("/_Host");
 
 app.UseForwardedHeaders();
 
 app.UseAntiforgery();
-
-app.UseStaticFiles();
 
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();
