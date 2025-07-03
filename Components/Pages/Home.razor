@@ -1,9 +1,14 @@
 ﻿@page "/"
 @inject HttpClient Http
 @attribute [System.ComponentModel.Description("ja")]
-<p>debug ver 1</p>
 
-<div style="position: relative; height: 100vh;">
+<!-- 右上にGitHubリンクを表示 -->
+<a href="https://github.com/yuu61/kasu_uso/" target="_blank" rel="noopener noreferrer"
+   style="position: absolute; top: 16px; right: 24px; z-index: 1000; text-decoration: none; color: #fff; font-size: 16px; background: #010409; border-radius: 6px; padding: 4px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+    GitHub
+</a>
+
+<div style="position: relative; height: 98vh;">
     <!-- ChatGPT APIのレスポンスを画面中央に表示 -->
     <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
         @if (!string.IsNullOrEmpty(Response))
@@ -14,7 +19,7 @@
 
     <!-- 画面中央下にテキストボックスと紙飛行機アイコンの送信ボタン -->
     <div style="position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); display: flex; align-items: center;">
-        <input @bind="UserInput" placeholder="メッセージを入力..." style="width: 300px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px;" />
+        <input @bind="UserInput" placeholder="メッセージを入力..." style="width: 300px; max-width: 50vw; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px;" />
         <button @onclick="SendMessage" style="margin-left: 8px; background: none; border: none; cursor: pointer;">
             @if (IsLoading)
             {
@@ -62,24 +67,22 @@
         var path = Path.Combine(rootPath, "API_KEY.credential");
         if (File.Exists(path))
         {
-            ApiKey = (await File.ReadAllTextAsync(path))
-                .Replace("\r", "")
-                .Replace("\n", "")
-                .Trim();
+            var rawKey = await File.ReadAllTextAsync(path);
+           
+            ApiKey = new string(rawKey.Where(c => c <= 0x7F).ToArray()).Trim();
         }
     }
 
     private async Task SendMessage()
     {
-        if (string.IsNullOrWhiteSpace(UserInput) || string.IsNullOrWhiteSpace(ApiKey)) return;
-
-        // 念のためここでもAPIキーをクリーンアップ
-        var cleanApiKey = ApiKey.Replace("\r", "").Replace("\n", "").Trim();
+        if (string.IsNullOrWhiteSpace(ApiKey)) return;
+                
+        var cleanApiKey = new string(ApiKey.Where(c => c <= 0x7F).ToArray()).Trim();
         IsLoading = true;
         try
         {
             var systemPrompt = new StringBuilder();
-            systemPrompt.Append("あなたは『カスの嘘』を面白おかしく生成するAIアシスタントです。\n");
+            systemPrompt.Append("あなたは「カスの嘘」を面白おかしく生成するAIアシスタントです。\n");
             systemPrompt.Append("以下の要件に沿って、すぐに嘘とわかるトリビア風のジョークを出力してください。\n");
             systemPrompt.Append("1. 入力テキストから季語を自動抽出してください。\n");
             systemPrompt.Append("2. 季語が含まれない場合は");
@@ -102,8 +105,8 @@
             {
                 model = "gpt-4.1-mini",
                 messages,
-                max_tokens = 200,
-                temperature = 0.8
+                max_tokens = 1000,
+                temperature = 1
             };
 
             var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions")
