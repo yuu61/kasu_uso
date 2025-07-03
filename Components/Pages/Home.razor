@@ -3,14 +3,13 @@
 @attribute [System.ComponentModel.Description("ja")]
 
 <!-- 右上にGitHubリンクを表示 -->
-<a href="https://github.com/yuu61/kasu_uso/" target="_blank" rel="noopener noreferrer"
-   style="position: absolute; top: 16px; right: 24px; z-index: 1000; text-decoration: none; color: #fff; font-size: 16px; background: #010409; border-radius: 6px; padding: 4px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+<a href="https://github.com/yuu61/kasu_uso/" target="_blank" rel="noopener noreferrer" class="github-link">
     GitHub
 </a>
 
-<div style="position: relative; height: 98vh;">
+<div class="container">
     <!-- ChatGPT APIのレスポンスを画面中央に表示 -->
-    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+    <div class="response-container">
         @if (!string.IsNullOrEmpty(Response))
         {
             <p>@Response</p>
@@ -18,9 +17,9 @@
     </div>
 
     <!-- 画面中央下にテキストボックスと紙飛行機アイコンの送信ボタン -->
-    <div style="position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); display: flex; align-items: center;">
-        <input @bind="UserInput" placeholder="メッセージを入力..." style="width: 300px; max-width: 50vw; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px;" />
-        <button @onclick="SendMessage" style="margin-left: 8px; background: none; border: none; cursor: pointer;">
+    <div class="input-container">
+        <input @bind="UserInput" placeholder="メッセージを入力..." class="message-input" />
+        <button @onclick="SendMessage" class="send-button">
             @if (IsLoading)
             {
                 <!-- ローディングアニメーション -->
@@ -41,9 +40,9 @@
     </div>
 
     <!-- 下部に季節ラベルと月選択ドロップダウンを横並びで表示 -->
-    <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px;">
-        <span style="margin-top: 8px;">季節を選択</span>
-        <select @bind="SelectedMonth" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    <div class="season-selector">
+        <span class="season-label">季節を選択</span>
+        <select @bind="SelectedMonth" class="month-select">
             <option value="Auto">自動</option>
             @for (int i = 1; i <= 12; i++)
             {
