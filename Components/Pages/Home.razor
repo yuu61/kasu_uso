@@ -2,8 +2,6 @@
 @inject HttpClient Http
 @attribute [System.ComponentModel.Description("ja")]
 
-<link href="kasu_uso.styles.css" rel="stylesheet" />
-
 <!-- 右上にGitHubリンクを表示 -->
 <a href="https://github.com/yuu61/kasu_uso/" target="_blank" rel="noopener noreferrer" class="github-link">
     GitHub
@@ -69,7 +67,7 @@
         if (File.Exists(path))
         {
             var rawKey = await File.ReadAllTextAsync(path);
-            
+           
             ApiKey = new string(rawKey.Where(c => c <= 0x7F).ToArray()).Trim();
         }
     }
