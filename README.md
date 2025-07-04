@@ -1,4 +1,4 @@
-# カスの嘘ジェネレータ (KasuUso Generator)
+﻿# [カスの嘘ジェネレータ (KasuUso Generator)](https://tukushityann.net)
 
 ## 概要
 
