@@ -70,15 +70,14 @@
         {
             var rawKey = await File.ReadAllTextAsync(path);
 
-            ApiKey = new string(rawKey.Where(c => c <= 0x7F).ToArray()).Trim();
+            ApiKey = (await File.ReadAllTextAsync(path)).Trim();
         }
     }
 
     private async Task SendMessage()
     {
         if (string.IsNullOrWhiteSpace(ApiKey)) return;
-                
-        var cleanApiKey = new string(ApiKey.Where(c => c <= 0x7F).ToArray()).Trim();
+
         IsLoading = true;
         try
         {
@@ -114,7 +113,7 @@
             {
                 Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
             };
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", cleanApiKey);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
 
             var result = await Http.SendAsync(request);
             result.EnsureSuccessStatusCode();
