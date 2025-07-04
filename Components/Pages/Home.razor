@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @inject HttpClient Http
 @attribute [System.ComponentModel.Description("ja")]
 
@@ -67,7 +67,7 @@
         if (File.Exists(path))
         {
             var rawKey = await File.ReadAllTextAsync(path);
-           
+
             ApiKey = new string(rawKey.Where(c => c <= 0x7F).ToArray()).Trim();
         }
     }
