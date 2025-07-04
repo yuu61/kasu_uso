@@ -27,3 +27,98 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+.github-link {
+    position: absolute;
+    top: 16px;
+    right: 24px;
+    z-index: 1000;
+    text-decoration: none;
+    color: #fff;
+    font-size: 16px;
+    background: #010409;
+    border-radius: 6px;
+    padding: 8px 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.container {
+    position: relative;
+    height: 98vh;
+}
+
+.response-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+/* 画面幅が540px以下の場合 */
+@media (max-width: 540px) {
+    .response-container {
+        width: 100%;
+    }
+}
+.input-container {
+	position: absolute;
+	bottom: 60px;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	align-items: center;
+}
+
+/* iOS Safariのツールバーにかぶらないように対応 */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+	.input-container {
+		padding-bottom: env(safe-area-inset-bottom);
+	}
+	.season-selector {
+		bottom: calc(20px + env(safe-area-inset-bottom));
+	}
+}
+
+.message-input {
+	width: 50vh;
+	min-width: 80%;
+	padding: 8px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	font-size: 16px;
+}
+
+@media (max-width: 540px) {
+    .input-container {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+.send-button {
+    margin-left: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.season-selector {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.season-label {
+    margin-top: 8px;
+}
+
+.month-select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
