@@ -1,4 +1,4 @@
-@page "/"
+﻿@page "/"
 @inject HttpClient Http
 @attribute [System.ComponentModel.Description("ja")]
 
@@ -6,7 +6,7 @@
 
 <!-- 右上にGitHubリンクを表示 -->
 <a href="https://github.com/yuu61/kasu_uso/" target="_blank" rel="noopener noreferrer" class="github-link">
-    GitHub
+    GitHub<br>yuu61/kasu_uso
 </a>
 
 <div class="container">
@@ -41,7 +41,7 @@
         </button>
     </div>
 
-    <!-- 下部に季節ラベルと月選択ドロップダウンを横並びで表示 -->
+    <!-- 月選択ドロップダウン -->
     <div class="season-selector">
         <span class="season-label">季節を選択</span>
         <select @bind="SelectedMonth" class="month-select">
@@ -61,9 +61,10 @@
     private string? ApiKey;
     private bool IsLoading { get; set; } = false;
 
+    // プロジェクトのルートディレクトリからAPIキーを読み込み
     protected override async Task OnInitializedAsync()
     {
-        // プロジェクトのルートディレクトリからAPIキーを読み込む
+        
         var rootPath = Directory.GetCurrentDirectory();
         var path = Path.Combine(rootPath, "API_KEY.credential");
         if (File.Exists(path))
