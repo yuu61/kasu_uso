@@ -19,7 +19,7 @@
 - [.NET 8.0 SDK](https://dotnet.microsoft.com/) 以上  
 - C# 11.0  
 - OpenAI API アクセス権（OpenAI API キー）  
-- Windows/macOS/Linux 上のターミナルまたは Visual Studio 2022／Visual Studio Code  
+- Windows/macOS/Linux 上のターミナルまたは**Visual Studio 2022**／Visual Studio Code  
 
 ## インストールとセットアップ
 
@@ -30,7 +30,7 @@
   ```
 
 2. API キーの準備
-   `home/user/kasu_uso/bin/Release/net8.0`に`API_KEY.credential` ファイルを作成し、OpenAI API キーを１行で記述します
+   リポジトリのルートに`API_KEY.credential`ファイルを作成し、OpenAI APIキーを１行で記述します
   ```
   sk-**************…
   ```
@@ -57,7 +57,7 @@ dotnet run
   `Home.razor` 内の `systemPrompt`や`userPrompt`を編集することで、生成されるカスの噓の傾向を調整できます
   モデルの設定現在以下のようになっています
   gpt-4.1-miniは結構高いので変更をお勧めします
-  ```
+  ```csharp
   model = "gpt-4.1-mini",
   messages,
   max_tokens = 1000,
