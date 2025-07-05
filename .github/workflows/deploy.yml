@@ -2,9 +2,15 @@ name: CI/CD Deploy
 
 on:
   push:
+    paths-ignore:
+      - '**.md'
+      - '.git**'
     branches:
       - master
+    
   workflow_dispatch:
+  
+  
   
 jobs:
   build-and-deploy:
