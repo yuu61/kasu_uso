@@ -19,7 +19,9 @@
 - [.NET 8.0 SDK](https://dotnet.microsoft.com/) 以上  
 - C# 11.0  
 - OpenAI API アクセス権（OpenAI API キー）  
-- Windows/macOS/Linux 上のターミナルまたは**Visual Studio 2022**／Visual Studio Code  
+- Windows/macOS/Linux 上のターミナルまたは**Visual Studio 2022**／Visual Studio Code
+
+Visual studioで動かすのが一番楽で速いと思います
 
 ## インストールとセットアップ
 
@@ -29,27 +31,59 @@
   cd kasu_uso
   ```
 
-2. API キーの準備
-   リポジトリのルートに`API_KEY.credential`ファイルを作成し、OpenAI APIキーを１行で記述します
-  ```
-  sk-**************…
-  ```
 
 3. .NETをインストール
 
 [.NET をインストールする](https://learn.microsoft.com/ja-jp/dotnet/core/install/)
 
 ## 実行方法
-リポジトリのルートで以下コマンドを実行
+1. リポジトリのルートで以下コマンドを実行
 ```bash
 dotnet publish -c Release
-sudo systemctl daemon-reload
-sudo systemctl enable blazor-app
-sudo systemctl start blazor-app
-dotnet run
+#実行結果
+MSBuild version 17.8.27+3ab07f0cf for .NET
+  Determining projects to restore...
+  Restored /home/user/kasu_uso/kasu_uso.csproj (in 1.2 sec).
+  kasu_uso -> /home/user/kasu_uso/bin/Release/net8.0/kasu_uso.dll
+  kasu_uso -> /home/user/kasu_uso/bin/Release/net8.0/publish/
+```
+2. `sudo vi /etc/systemd/system/blazor-app.service`で以下のファイルを作成<br>userの部分は`dotnet publish -c Release`の実行結果を参考に適宜書き換えてください
+```bash
+[Unit]
+Description=Blazor Server App
+After=network.target
+
+[Service]
+WorkingDirectory=/home/user/kasu_uso/bin/Release/net8.0/publish
+ExecStart=/usr/bin/dotnet /home/user/kasu_uso/bin/Release/net8.0/kasu_uso.dll
+Restart=always
+RestartSec=10
+User=deploy
+Environment=ASPNETCORE_ENVIRONMENT=Production
+SyslogIdentifier=blazor-app
+
+[Install]
+WantedBy=multi-user.target
+```
+3. API キーの準備
+`/kasu_uso/bin/Release/net8.0/publish`に`API_KEY.credential`ファイルを作成し、OpenAI APIキーを１行で記述します
+```
+sk-**************…
 ```
 
-`https://localhost:5001`にブラウザでアクセスすると、UIが表示されます
+```bash
+sudo systemctl daemon-reload
+# sudo systemctl enable blazor-app
+sudo systemctl start blazor-app
+dotnet run
+#実行結果
+user@ubuntu:~/kasu_uso$ dotnet run
+ビルドしています...
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:xxxx
+```
+
+`https://localhost:xxxx`にブラウザでアクセスすると、UIが表示されます
 
 ## カスタマイズ
 
