@@ -32,7 +32,7 @@ jobs:
       env:
         API_CREDENTIAL: ${{ secrets.API_CREDENTIAL }}
       run: | 
-        echo -n "$API_CREDENTIAL" > publish/API.credential
+        echo -n "$API_CREDENTIAL" > publish/API_KEY.credential
         chmod 600 publish/API.credential
 
     - name: Copy files via SSH
