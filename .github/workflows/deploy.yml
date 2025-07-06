@@ -28,6 +28,12 @@ jobs:
     - name: Publish
       run: dotnet publish ./kasu_uso.csproj -c Release -o publish
 
+    - name: Inject API credential
+      env:
+        API_CREDENTIAL: ${{ secrets.API_CREDENTIAL }}
+      run: | 
+        echo -n "$API_CREDENTIAL" > publish/API.credential
+        chmod 600 publish/API.credential
 
     - name: Copy files via SSH
       uses: appleboy/scp-action@v0.1.4
