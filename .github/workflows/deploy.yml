@@ -21,7 +21,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
@@ -36,7 +36,7 @@ jobs:
         chmod 600 publish/API.credential
 
     - name: Copy files via SSH
-      uses: appleboy/scp-action@v0.1.4
+      uses: appleboy/scp-action@v1
       with:
         host: tukushityann.net
         username: hoge
@@ -47,7 +47,7 @@ jobs:
         rm:  true
 
     - name: Restart service
-      uses: appleboy/ssh-action@v0.1.7
+      uses: appleboy/ssh-action@v1
       with:
         host: tukushityann.net
         username: hoge
