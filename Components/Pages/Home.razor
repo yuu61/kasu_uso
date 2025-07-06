@@ -64,7 +64,7 @@
     // プロジェクトのルートディレクトリからAPIキーを読み込み
     protected override async Task OnInitializedAsync()
     {
-        
+
         var rootPath = Directory.GetCurrentDirectory();
         var path = Path.Combine(rootPath, "API_KEY.credential");
         if (File.Exists(path))
@@ -77,7 +77,11 @@
 
     private async Task SendMessage()
     {
-        if (string.IsNullOrWhiteSpace(ApiKey)) return;
+        if (string.IsNullOrWhiteSpace(ApiKey))
+        {
+            Response = "API Keyエラー";
+            return;
+        }
 
         IsLoading = true;
         try
@@ -122,6 +126,10 @@
             var doc = JsonDocument.Parse(json);
             Response = doc.RootElement.GetProperty("choices")[0]
                 .GetProperty("message").GetProperty("content").GetString() ?? string.Empty;
+        }
+        catch (HttpRequestException ex)
+        {
+            Response = "API通信エラー: " + ex.Message;
         }
         finally
         {
