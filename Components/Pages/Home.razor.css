@@ -1,4 +1,19 @@
-﻿.github-link {
+﻿/* 共通ユーティリティ */
+.center-absolute {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* GitHubリンク */
+.github-link {
     position: absolute;
     top: 16px;
     right: 24px;
@@ -9,64 +24,55 @@
     font-size: 16px;
     background: #010409;
     border-radius: 6px;
-    padding: 8px 8px;
+    padding: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
+/* メインコンテナ */
 .container {
     position: relative;
     height: 98vh;
 }
 
+/* レスポンス表示 */
 .response-container {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    composes: center-absolute;
     text-align: center;
+    width: auto;
 }
 
-/* 画面幅が540px以下の場合 */
-@media (max-width: 540px) {
-    .response-container {
-        width: 100%;
-    }
-}
+/* 入力エリア */
 .input-container {
-	position: absolute;
-	bottom: 60px;
-	left: 50%;
-	transform: translateX(-50%);
-	display: flex;
-	align-items: center;
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    width: auto;
 }
 
-/* iOS Safariのツールバーにかぶらないように対応 */
+/* iOS Safari対応 */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
-	.input-container {
-		padding-bottom: env(safe-area-inset-bottom);
-	}
-	.season-selector {
-		bottom: calc(20px + env(safe-area-inset-bottom));
-	}
-}
-
-.message-input {
-	width: 60vh;
-	min-width: 80%;
-	padding: 8px;
-	border: 1px solid #ccc;
-	border-radius: 4px;
-	font-size: 16px;
-}
-
-@media (max-width: 540px) {
     .input-container {
-        width: 100%;
-        justify-content: center;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    .season-selector {
+        bottom: calc(20px + env(safe-area-inset-bottom));
     }
 }
 
+/* メッセージ入力 */
+.message-input {
+    width: 60vh;
+    min-width: 80%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+/* 送信ボタン */
 .send-button {
     margin-left: 8px;
     background: none;
@@ -74,6 +80,7 @@
     cursor: pointer;
 }
 
+/* 季節セレクタ */
 .season-selector {
     position: absolute;
     bottom: 20px;
@@ -92,4 +99,15 @@
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 4px;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 540px) {
+    .response-container {
+        width: 100%;
+    }
+    .input-container {
+        width: 100%;
+        justify-content: center;
+    }
 }
