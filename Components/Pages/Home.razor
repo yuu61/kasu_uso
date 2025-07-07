@@ -1,6 +1,7 @@
 ﻿@page "/"
 @inject HttpClient Http
 @attribute [System.ComponentModel.Description("ja")]
+<PageTitle>@pagetitle</PageTitle>
 
 <link href="kasu_uso.styles.css" rel="stylesheet" />
 
@@ -55,9 +56,10 @@
 </div>
 
 @code {
+    private string pagetitle { get; } = "カスの嘘ジェネレーター";
     private string Response { get; set; } = string.Empty;
     private string UserInput { get; set; } = string.Empty;
-    private string _selectedMonth = "Auto";
+    private string _selectedMonth = "Auto";    
     public string SelectedMonth
     {
         get => _selectedMonth;
