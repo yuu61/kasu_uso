@@ -20,7 +20,7 @@
 
     <!-- 画面中央下にテキストボックスと紙飛行機アイコンの送信ボタン -->
     <div class="input-container">
-        <input @bind="UserInput" placeholder="メッセージを入力..." class="message-input" />
+        <input @bind="UserInput" placeholder="メッセージを入力..." class="message-input" name="ユーザーインプット"/>
         <button @onclick="SendMessage" class="send-button">
             @if (IsLoading)
             {
@@ -44,7 +44,7 @@
     <!-- 月選択ドロップダウン -->
     <div class="season-selector">
         <span class="season-label">季節を選択</span>
-        <select @bind="SelectedMonth" class="month-select">
+        <select @bind="SelectedMonth" class="month-select "name="月の選択">
             <option value="Auto">自動</option>
             @for (int i = 1; i <= 12; i++)
             {
