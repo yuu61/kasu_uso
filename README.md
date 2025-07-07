@@ -25,9 +25,13 @@
 - OpenAI API アクセス権（OpenAI API キー）  
 - Windows/macOS/Linux 上のターミナルまたは**Visual Studio 2022**／Visual Studio Code
 
-Visual studioで動かすのが一番楽で速いと思います
+Visual studioで動かすのが一番楽で速いと思います<br>
+クローンしてAPIキー設定して`Ctrl + F5`するだけです
 
 ## インストールとセットアップ
+以下に`Ubuntu 24.04.2 LTS`での手順を説明します<br>
+誤りがある場合はよしなにしてください<br>
+  ？？？「[ゆるしてよ～](https://youtu.be/jGWFDZ33UCU?si=faB5lkz3_68f8vZT)」
 
 1. リポジトリをクローン
   ```bash
@@ -40,8 +44,7 @@ Visual studioで動かすのが一番楽で速いと思います
 
 [.NET をインストールする](https://learn.microsoft.com/ja-jp/dotnet/core/install/)
 
-## 実行方法
-1. リポジトリのルートで以下コマンドを実行
+4. リポジトリのルートで以下コマンドを実行
 ```bash
 dotnet publish -c Release
 #実行結果
@@ -51,7 +54,7 @@ MSBuild version 17.8.27+3ab07f0cf for .NET
   kasu_uso -> /home/user/kasu_uso/bin/Release/net8.0/kasu_uso.dll
   kasu_uso -> /home/user/kasu_uso/bin/Release/net8.0/publish/
 ```
-2. `sudo vi /etc/systemd/system/blazor-app.service`で以下のファイルを作成<br>userの部分は`dotnet publish -c Release`の実行結果を参考に適宜書き換えてください
+5. `sudo vi /etc/systemd/system/blazor-app.service`で以下のファイルを作成<br>userの部分は`dotnet publish -c Release`の実行結果を参考に適宜書き換えてください
 ```bash
 [Unit]
 Description=Blazor Server App
@@ -69,12 +72,12 @@ SyslogIdentifier=blazor-app
 [Install]
 WantedBy=multi-user.target
 ```
-3. API キーの準備
+6. API キーの準備
 `/kasu_uso/bin/Release/net8.0/publish`に`API_KEY.credential`ファイルを作成し、OpenAI APIキーを１行で記述します
 ```
 sk-**************…
 ```
-
+7. 実行
 ```bash
 sudo systemctl daemon-reload
 # sudo systemctl enable blazor-app
