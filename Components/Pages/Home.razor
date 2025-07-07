@@ -57,7 +57,22 @@
 @code {
     private string Response { get; set; } = string.Empty;
     private string UserInput { get; set; } = string.Empty;
-    private string SelectedMonth { get; set; } = "Auto";
+    private string _selectedMonth = "Auto";
+    public string SelectedMonth
+    {
+        get => _selectedMonth;
+        set
+        {
+            _selectedMonth = value switch
+            {
+                "Auto" => "Auto",
+                _ when int.TryParse(value, out int m)
+                    => Math.Clamp(m, 1, 12).ToString(),
+                _ => "Auto"
+            };
+        }
+    }
+
     private string? ApiKey;
     private bool IsLoading { get; set; } = false;
 
@@ -79,7 +94,7 @@
     {
         if (string.IsNullOrWhiteSpace(ApiKey))
         {
-            Response = "API Keyエラー";
+            Response = "API Keyがセットされていません"; 
             return;
         }
 
@@ -131,7 +146,7 @@
         }
         catch (HttpRequestException ex)
         {
-            Response = "API通信エラー: " + ex.Message;
+            Response = "API Keyの値が正しくありません: " + ex.Message;
         }
         finally
         {
