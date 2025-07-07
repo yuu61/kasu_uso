@@ -1,5 +1,9 @@
 ﻿# [カスの嘘ジェネレータ (KasuUso Generator)](https://tukushityann.net)
 
+[発表スライド](https://docs.google.com/presentation/d/1MfaHd2M6ElZcYaiWHERlNSd227NUAcXuGQxoyaVsacw/edit?usp=sharing)
+
+[Chat GPTに書かせたDeep Researchの結果](https://chatgpt.com/s/dr_68687bb085d08191a03f76d22054a73c)
+
 ## 概要
 
 「カスの嘘ジェネレータ」は、OpenAI APIを使ってカスの嘘を生成する C#/.NET アプリケーションです  
