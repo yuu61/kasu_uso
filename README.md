@@ -1,15 +1,15 @@
-﻿# [カスの嘘ジェネレータ (KasuUso Generator)](https://tukushityann.net)
+﻿# [カスの嘘ジェネレータ (KasuUso Generator)](https://tukushityann.net){:target="_blank"}
 
-[発表スライド](https://docs.google.com/presentation/d/1MfaHd2M6ElZcYaiWHERlNSd227NUAcXuGQxoyaVsacw/edit?usp=sharing)
+[発表スライド](https://docs.google.com/presentation/d/1MfaHd2M6ElZcYaiWHERlNSd227NUAcXuGQxoyaVsacw/edit?usp=sharing){:target="_blank"}
 
-[Chat GPTに書かせたDeep Researchの結果](https://chatgpt.com/s/dr_68687bb085d08191a03f76d22054a73c)
+[Chat GPTに書かせたDeep Researchの結果](https://chatgpt.com/s/dr_68687bb085d08191a03f76d22054a73c){:target="_blank"}
 
 ## 概要
 
 「カスの嘘ジェネレータ」は、OpenAI APIを使ってカスの嘘を生成する C#/.NET アプリケーションです  
 日常のちょっとした雑談やプレゼンのアクセント、SNS投稿ネタとして活用できます
 
-[カスの嘘 - Wikipedia](https://ja.wikipedia.org/wiki/%E3%83%80%E3%82%A6%E3%83%8A%E3%83%BC%E7%B3%BB%E3%81%8A%E5%A7%89%E3%81%95%E3%82%93%E3%81%AB%E6%AF%8E%E6%97%A5%E3%82%AB%E3%82%B9%E3%81%AE%E5%98%98%E3%82%92%E6%B5%81%E3%81%97%E8%BE%BC%E3%81%BE%E3%82%8C%E3%82%8B%E9%9F%B3%E5%A3%B0)
+[カスの嘘 - Wikipedia](https://ja.wikipedia.org/wiki/%E3%83%80%E3%82%A6%E3%83%8A%E3%83%BC%E7%B3%BB%E3%81%8A%E5%A7%89%E3%81%95%E3%82%93%E3%81%AB%E6%AF%8E%E6%97%A5%E3%82%AB%E3%82%B9%E3%81%AE%E5%98%98%E3%82%92%E6%B5%81%E3%81%97%E8%BE%BC%E3%81%BE%E3%82%8C%E3%82%8B%E9%9F%B3%E5%A3%B0){:target="_blank"}
 
 ## 主な機能
 
@@ -20,7 +20,7 @@
 
 ## 必要環境
 
-- [.NET 8.0 SDK](https://dotnet.microsoft.com/) 以上  
+- [.NET 8.0 SDK](https://dotnet.microsoft.com/){:target="_blank"} 以上  
 - C# 11.0  
 - OpenAI API アクセス権（OpenAI API キー）  
 - Windows/macOS/Linux 上のターミナルまたは**Visual Studio 2022**／Visual Studio Code
@@ -31,7 +31,7 @@ Visual studioで動かすのが一番楽で速いと思います<br>
 ## インストールとセットアップ
 以下に`Ubuntu 24.04.2 LTS`での手順を説明します<br>
 誤りがある場合はよしなにしてください<br>
-  ？？？「[ゆるしてよ～](https://youtu.be/jGWFDZ33UCU?si=faB5lkz3_68f8vZT)」
+  ？？？「[ゆるしてよ～](https://youtu.be/jGWFDZ33UCU?si=faB5lkz3_68f8vZT){:target="_blank"}」
 
 1. リポジトリをクローン
   ```bash
@@ -42,7 +42,7 @@ Visual studioで動かすのが一番楽で速いと思います<br>
 
 3. .NETをインストール
 
-[.NET をインストールする](https://learn.microsoft.com/ja-jp/dotnet/core/install/)
+[.NET をインストールする](https://learn.microsoft.com/ja-jp/dotnet/core/install/){:target="_blank"}
 
 4. リポジトリのルートで以下コマンドを実行
 ```bash
