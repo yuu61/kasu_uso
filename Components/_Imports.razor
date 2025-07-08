@@ -1,4 +1,4 @@
-@using System.Net.Http
+﻿@using System.Net.Http
 @using System.Net.Http.Json
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Routing
@@ -11,4 +11,7 @@
 @using System.Net.Http.Headers
 @using System.Text.Json
 @using System.Text
-
+@using kasu_uso.Components.Pages
+@inject HttpClient Http
+@inject IConfiguration Configuration
+@inject ILogger<Home> Logger

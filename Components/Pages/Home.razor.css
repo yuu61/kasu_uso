@@ -1,4 +1,16 @@
-﻿/* 共通ユーティリティ */
+﻿@font-face {
+    font-family: "BIZ UDPゴシック";
+    src: url("../../wwwroot/fonts/BIZUDPGothic-Regular.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+body {
+    font-family: "BIZ UDPゴシック";
+}
+
+/* 共通ユーティリティ */
 .center-absolute {
     position: absolute;
     top: 50%;
