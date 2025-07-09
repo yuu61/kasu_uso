@@ -1,6 +1,6 @@
 ﻿@font-face {
     font-family: "BIZ UDPゴシック";
-    src: url("../../wwwroot/fonts/BIZUDPGothic-Regular.woff2") format("woff2");
+    src: url("/fonts/BIZUDPGothic-Regular.woff2") format("woff2");
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -8,6 +8,27 @@
 
 body {
     font-family: "BIZ UDPゴシック";
+}
+
+/* 既存のスタイルはそのまま */
+
+div {
+    display: flex;
+    justify-content: left;
+    align-items: center;
+}
+
+.serviceico {
+	width: 32px;
+	padding: 16px;
+	height: auto;
+	object-fit: contain;
+	cursor: pointer;
+	transition: transform 0.2s ease-in-out, filter 0.2s ease-in-out;
+}
+
+.serviceico:hover {
+    transform: scale(1.2);
 }
 
 /* 共通ユーティリティ */
@@ -43,7 +64,7 @@ body {
 /* メインコンテナ */
 .container {
     position: relative;
-    height: 98vh;
+    height: 89vh;
 }
 
 /* レスポンス表示 */
