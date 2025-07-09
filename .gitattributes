@@ -61,3 +61,15 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+###############################################################################
+# ── 以下、Blazor Server プロジェクト用の Linguist 制御設定 ──
+###############################################################################
+
+# Blazor コンポーネント (.razor) を C# としてカウント
+*.razor               linguist-language=C#
+
+# C# ソース、プロジェクトファイル、ビューの言語指定
+*.cs                  linguist-language=C#
+*.csproj              linguist-language=XML
+*.cshtml              linguist-language=HTML
