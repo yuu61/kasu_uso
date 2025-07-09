@@ -1,6 +1,6 @@
 ﻿# [カスの嘘ジェネレータ (KasuUso Generator)](tukushityann.net)
 
-[発表スライド](docs.google.com/presentation/d/1MfaHd2M6ElZcYaiWHERlNSd227NUAcXuGQxoyaVsacw/edit?usp=sharing)
+[発表スライド](https://docs.google.com/presentation/d/1MfaHd2M6ElZcYaiWHERlNSd227NUAcXuGQxoyaVsacw/edit?usp=sharing)
 
 [Chat GPTに書かせたDeep Researchの結果](chatgpt.com/s/dr_68687bb085d08191a03f76d22054a73c)
 
