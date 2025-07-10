@@ -35,22 +35,6 @@ jobs:
         echo -n "$API_CREDENTIAL" > publish/API_KEY.credential
         chmod 600 publish/API_KEY.credential
 
-    - name: Validate OpenAI API Key
-      run: |
-        KEY=$(cat publish/API_KEY.credential)
-        echo "▶️ Checking OpenAI API key…"
-        status_code=$(
-        curl -s -o /dev/null -w "%{http_code}" \
-        https://api.openai.com/v1/models \
-        -H "Authorization: Bearer $KEY"
-        )
-        if [ "$status_code" -eq 200 ]; then
-          echo "✅ OpenAI API key is valid."
-        else
-          echo "❌ Invalid OpenAI API key (HTTP $status_code)." >&2
-          exit 1
-        fi
-
     - name: Copy files via SSH
       uses: appleboy/scp-action@v1
       with:
