@@ -1,4 +1,5 @@
 ﻿using kasu_uso.Components;
+using kasu_uso.Services;
 using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +9,9 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddControllers();
+
+// Prometheusメトリクスサービスを追加
+builder.Services.AddSingleton<MetricsService>();
 
 builder.Services.AddHttpClient("OpenAI", client =>
 {
@@ -28,7 +32,7 @@ app.UseRouting();
 // HTTPリクエストメトリクスを収集
 app.UseHttpMetrics();
 
-app.MapMetrics(); 
+app.MapMetrics();
 app.MapControllers();
 
 app.UseHttpsRedirection();
