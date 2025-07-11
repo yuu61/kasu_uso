@@ -1,6 +1,10 @@
 ﻿@page "/"
 @inject HttpClient Http
+@inject kasu_uso.Services.MetricsService MetricsService
+@inject IConfiguration Configuration
+@inject ILogger<Home> Logger
 @attribute [System.ComponentModel.Description("ja")]
+@implements IDisposable
 <PageTitle>カスの嘘ジェネレーター</PageTitle>
 
 <link href="kasu_uso.styles.css" rel="stylesheet" />
@@ -16,12 +20,12 @@
 
         <!-- メニュー項目 -->
         <div class="menu-items @(IsMenuOpen ? "menu-open" : "")">
-            <a href="@PayPalUrl" target="_blank"><img class="serviceico" src="/images/PayPal_Logo2014.svg" alt="paypal" /></a>
-            <a href="@TwitterShareUrl" target="_blank"><img class="serviceico" src="/images/Logo_of_Twitter.svg" alt="Share to Twitter" /></a>
-            <a href="@facebookShareUrl" target="_blank"><img class="serviceico" src="/images/Facebook_Logo_Primary.png" alt="Share to Facebook" /></a>
-            <a href="https://www.instagram.com" target="_blank"><img class="serviceico" src="/images/Instagram_Glyph_Gradient.svg" alt="Share to Instagram" /></a>
-            <a href="https://www.reddit.com" target="_blank"><img class="serviceico" src="/images/Reddit_Icon_FullColor.svg" alt="Share to Reddit" /></a>
-            <a href="https://www.line.me" target="_blank"><img class="serviceico" src="/images/LINE_Brand_icon.png" alt="Share to LINE" /></a>
+            <a href="@PayPalUrl" target="_blank" @onclick='() => RecordShareClick("paypal")'><img class="serviceico" src="/images/PayPal_Logo2014.svg" alt="paypal" /></a>
+            <a href="@TwitterShareUrl" target="_blank" @onclick='() => RecordShareClick("twitter")'><img class="serviceico" src="/images/Logo_of_Twitter.svg" alt="Share to Twitter" /></a>
+            <a href="@facebookShareUrl" target="_blank" @onclick='() => RecordShareClick("facebook")'><img class="serviceico" src="/images/Facebook_Logo_Primary.png" alt="Share to Facebook" /></a>
+            <a href="https://www.instagram.com" target="_blank" @onclick='() => RecordShareClick("instagram")'><img class="serviceico" src="/images/Instagram_Glyph_Gradient.svg" alt="Share to Instagram" /></a>
+            <a href="https://www.reddit.com" target="_blank" @onclick='() => RecordShareClick("reddit")'><img class="serviceico" src="/images/Reddit_Icon_FullColor.svg" alt="Share to Reddit" /></a>
+            <a href="https://www.line.me" target="_blank" @onclick='() => RecordShareClick("line")'><img class="serviceico" src="/images/LINE_Brand_icon.png" alt="Share to LINE" /></a>
         </div>
     </div>
 
@@ -64,7 +68,7 @@
     <!-- 月選択ドロップダウン -->
     <div class="season-selector">
         <span class="season-label">季節を選択</span>
-        <select @bind="SelectedMonth" class="month-select "name="月の選択">
+        <select @bind="SelectedMonth" @bind:after="OnMonthSelectionChanged" class="month-select "name="月の選択">
             <option value="Auto">自動</option>
             @for (int i = 1; i <= 12; i++)
             {
@@ -75,6 +79,9 @@
 </div>
 
 @code {
+    private string _sessionId = string.Empty;
+    private readonly System.Diagnostics.Stopwatch _pageLoadStopwatch = new();
+
     private string PayPalUrl { get; } = "https://www.paypal.com/paypalme/yuu2461";
     private string _TwitterShareUrl = "https://twitter.com/tukushityann";
     private string TwitterShareUrl
@@ -146,6 +153,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _pageLoadStopwatch.Start();
+        
+        // セッションIDを生成してメトリクスに記録
+        _sessionId = Guid.NewGuid().ToString();
+        MetricsService.IncrementActiveSession(_sessionId);
+
         try
         {
             _apiKey = Configuration["OpenAI:ApiKey"];
@@ -161,7 +174,13 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "APIキーの読み込みに失敗しました");
+            MetricsService.RecordError("api_key_load_error");
             _apiKey = string.Empty;
+        }
+        finally
+        {
+            _pageLoadStopwatch.Stop();
+            MetricsService.RecordPageLoadTime(_pageLoadStopwatch.Elapsed.TotalSeconds);
         }
     }
 
@@ -189,17 +208,25 @@
         if (string.IsNullOrWhiteSpace(_apiKey))
         {
             ChatResponse = "API Keyが設定されていません。";
+            MetricsService.RecordError("missing_api_key");
             return;
         }
 
+        // メトリクス記録
+        MetricsService.IncrementGenerateButtonClicks();
+        MetricsService.IncrementMessagesSent();
+
         IsLoading = true;
+        var apiStopwatch = System.Diagnostics.Stopwatch.StartNew();
+        
         try
         {
             var system = BuildSystemPrompt();
             var user = $"キーワード: {Keyword}";
+            var model = "gpt-4o-mini"; // gpt-4.1-miniから修正
             var payload = new
             {
-                model = "gpt-4.1-mini",
+                model = model,
                 messages = new[]
                 {
                     new { role = "system", content = system },
@@ -217,37 +244,77 @@
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
             using var response = await Http.SendAsync(request, cts.Token);
-            response.EnsureSuccessStatusCode();
+            
+            apiStopwatch.Stop();
+            
+            if (response.IsSuccessStatusCode)
+            {
+                MetricsService.RecordOpenAiApiCall("success", model, apiStopwatch.Elapsed.TotalSeconds);
+                
+                await using var stream = await response.Content.ReadAsStreamAsync();
+                var doc = await JsonDocument.ParseAsync(stream);
+                var content = doc.RootElement
+                    .GetProperty("choices")[0]
+                    .GetProperty("message")
+                    .GetProperty("content")
+                    .GetString() ?? string.Empty;
 
-            await using var stream = await response.Content.ReadAsStreamAsync();
-            var doc = await JsonDocument.ParseAsync(stream);
-            var content = doc.RootElement
-                .GetProperty("choices")[0]
-                .GetProperty("message")
-                .GetProperty("content")
-                .GetString() ?? string.Empty;
-
-            ChatResponse = content;
+                ChatResponse = content;
+            }
+            else
+            {
+                MetricsService.RecordOpenAiApiCall("error", model, apiStopwatch.Elapsed.TotalSeconds);
+                MetricsService.RecordOpenAiApiError($"http_{(int)response.StatusCode}");
+                ChatResponse = $"APIエラー: {response.StatusCode}";
+            }
         }
         catch (HttpRequestException ex)
         {
+            apiStopwatch.Stop();
+            MetricsService.RecordOpenAiApiCall("error", "unknown", apiStopwatch.Elapsed.TotalSeconds);
+            MetricsService.RecordOpenAiApiError("http_request_exception");
             ChatResponse = $"通信エラー: {ex.Message}";
         }
         catch (JsonException ex)
         {
+            apiStopwatch.Stop();
+            MetricsService.RecordOpenAiApiError("json_parse_error");
             ChatResponse = $"レスポンス解析エラー: {ex.Message}";
         }
         catch (TaskCanceledException)
         {
+            apiStopwatch.Stop();
+            MetricsService.RecordOpenAiApiError("timeout");
             ChatResponse = "リクエストがタイムアウトしました。";
         }
         catch (Exception ex)
         {
+            apiStopwatch.Stop();
+            MetricsService.RecordOpenAiApiError("unknown_error");
             ChatResponse = $"想定外のエラー: {ex.Message}";
         }
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    private void OnMonthSelectionChanged()
+    {
+        MetricsService.RecordMonthSelection(SelectedMonth);
+    }
+
+    private void RecordShareClick(string platform)
+    {
+        MetricsService.RecordShareButtonClick(platform);
+    }
+
+    public void Dispose()
+    {
+        // セッション終了時にメトリクスから削除
+        if (!string.IsNullOrEmpty(_sessionId))
+        {
+            MetricsService.DecrementActiveSession(_sessionId);
         }
     }
 }
