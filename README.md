@@ -46,24 +46,6 @@
 - `http_requests_total` - HTTPリクエスト総数
 - `http_request_duration_seconds` - HTTPリクエスト応答時間
 
-### メトリクス確認方法
-
-1. **Prometheusメトリクス**: `http://localhost:5000/metrics` でPrometheus形式のメトリクスを確認
-2. **メトリクス情報**: `http://localhost:5000/api/metricsinfo` で利用可能なメトリクス一覧を確認
-
-## 推奨監視項目
-
-### 運用監視
-- **API呼び出し成功率**: `kasu_uso_openai_api_calls_total{status="success"}` / `kasu_uso_openai_api_calls_total`
-- **API応答時間**: `kasu_uso_openai_api_duration_seconds`の95パーセンタイル
-- **エラー率**: `kasu_uso_openai_api_errors_total`および`kasu_uso_errors_total`
-- **アクティブセッション数**: `kasu_uso_active_sessions_total`
-
-### ビジネス監視
-- **利用頻度**: `kasu_uso_generate_button_clicks_total`の増加率
-- **人気の季節**: `kasu_uso_month_selections_total`の分布
-- **シェア率**: `kasu_uso_share_button_clicks_total`の各プラットフォーム別データ
-
 ## 必要環境
 
 - [.NET 8.0 SDK](https://dotnet.microsoft.com/) 以上  
@@ -86,13 +68,19 @@ Visual studioで動かすのが一番楽で速いと思います<br>
 
 [.NET をインストールする](https://learn.microsoft.com/ja-jp/dotnet/core/install/)
 
-4. リポジトリのルートで以下コマンドを実行dotnet publish -c Release
+4. リポジトリのルートで以下コマンドを実行
+```
+dotnet publish -c Release
 #実行結果
 MSBuild version 17.8.27+3ab07f0cf for .NET
   Determining projects to restore...
   Restored /home/user/kasu_uso/kasu_uso.csproj (in 1.2 sec).
   kasu_uso -> /home/user/kasu_uso/bin/Release/net8.0/kasu_uso.dll
-  kasu_uso -> /home/user/kasu_uso/bin/Release/net8.0/publish/5. `sudo vi /etc/systemd/system/blazor-app.service`で以下のファイルを作成<br>userの部分は`dotnet publish -c Release`の実行結果を参考に適宜書き換えてください[Unit]
+  kasu_uso -> /home/user/kasu_uso/bin/Release/net8.0/publish/
+```
+5. `sudo vi /etc/systemd/system/blazor-app.service`で以下のファイルを作成<br>userの部分は`dotnet publish -c Release`の実行結果を参考に適宜書き換えてください
+```
+[Unit]
 Description=Blazor Server App
 After=network.target
 
@@ -106,8 +94,16 @@ Environment=ASPNETCORE_ENVIRONMENT=Production
 SyslogIdentifier=blazor-app
 
 [Install]
-WantedBy=multi-user.target6. API キーの準備
-`/kasu_uso/bin/Release/net8.0/publish`に`API_KEY.credential`ファイルを作成し、OpenAI APIキーを１行で記述しますsk-**************…7. 実行sudo systemctl daemon-reload
+WantedBy=multi-user.target
+```
+6. API キーの準備
+`/kasu_uso/bin/Release/net8.0/publish`に`API_KEY.credential`ファイルを作成し、OpenAI APIキーを１行で記述します
+```
+sk-**************…
+```
+7. 実行
+```
+sudo systemctl daemon-reload
 # sudo systemctl enable blazor-app
 sudo systemctl start blazor-app
 dotnet run
@@ -116,6 +112,7 @@ user@ubuntu:~/kasu_uso$ dotnet run
 ビルドしています...
 info: Microsoft.Hosting.Lifetime[14]
       Now listening on: http://localhost:xxxx
+```
 `https://localhost:xxxx`にブラウザでアクセスすると、UIが表示されます
 
 ## カスタマイズ
@@ -123,47 +120,11 @@ info: Microsoft.Hosting.Lifetime[14]
 * **プロンプトの変更**  
   `Home.razor` 内の `systemPrompt`や`userPrompt`を編集することで、生成されるカスの噓の傾向を調整できます
   モデルの設定現在以下のようになっています
-  gpt-4o-miniはコストパフォーマンスに優れていますmodel = "gpt-4o-mini",
+```
+model = "gpt-4o-mini",
   messages,
   max_tokens = 1000,
-  temperature = 1* **UI の拡張**
-
+  temperature = 1
+```
+* **UI の拡張**
   Blazor コンポーネントを追加し、複数テーマ選択や生成履歴機能などを組み込むことも可能です
-
-## Grafanaダッシュボードの例
-
-Prometheusと組み合わせてGrafanaでダッシュボードを作成することをお勧めします：
-{
-  "dashboard": {
-    "title": "カスの嘘ジェネレーター監視",
-    "panels": [
-      {
-        "title": "API成功率",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "rate(kasu_uso_openai_api_calls_total{status=\"success\"}[5m]) / rate(kasu_uso_openai_api_calls_total[5m]) * 100"
-          }
-        ]
-      },
-      {
-        "title": "アクティブセッション数",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "kasu_uso_active_sessions_total"
-          }
-        ]
-      },
-      {
-        "title": "API応答時間",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, rate(kasu_uso_openai_api_duration_seconds_bucket[5m]))"
-          }
-        ]
-      }
-    ]
-  }
-}
