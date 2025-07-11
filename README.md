@@ -46,24 +46,6 @@
 - `http_requests_total` - HTTPリクエスト総数
 - `http_request_duration_seconds` - HTTPリクエスト応答時間
 
-### メトリクス確認方法
-
-1. **Prometheusメトリクス**: `http://localhost:5000/metrics` でPrometheus形式のメトリクスを確認
-2. **メトリクス情報**: `http://localhost:5000/api/metricsinfo` で利用可能なメトリクス一覧を確認
-
-## 推奨監視項目
-
-### 運用監視
-- **API呼び出し成功率**: `kasu_uso_openai_api_calls_total{status="success"}` / `kasu_uso_openai_api_calls_total`
-- **API応答時間**: `kasu_uso_openai_api_duration_seconds`の95パーセンタイル
-- **エラー率**: `kasu_uso_openai_api_errors_total`および`kasu_uso_errors_total`
-- **アクティブセッション数**: `kasu_uso_active_sessions_total`
-
-### ビジネス監視
-- **利用頻度**: `kasu_uso_generate_button_clicks_total`の増加率
-- **人気の季節**: `kasu_uso_month_selections_total`の分布
-- **シェア率**: `kasu_uso_share_button_clicks_total`の各プラットフォーム別データ
-
 ## 必要環境
 
 - [.NET 8.0 SDK](https://dotnet.microsoft.com/) 以上  
