@@ -1,3 +1,15 @@
+﻿@font-face {
+    font-family: "BIZ UDPゴシック";
+    src: url("/fonts/BIZUDPGothic-Regular.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+body {
+    font-family: "BIZ UDPゴシック", sans-serif;
+}
+
 h1:focus {
     outline: none;
 }
