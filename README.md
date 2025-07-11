@@ -138,9 +138,11 @@ info: Microsoft.Hosting.Lifetime[14]
 * **プロンプトの変更**  
   `Home.razor` 内の `systemPrompt`や`userPrompt`を編集することで、生成されるカスの噓の傾向を調整できます
   モデルの設定現在以下のようになっています
-  gpt-4o-miniはコストパフォーマンスに優れていますmodel = "gpt-4o-mini",
+```
+model = "gpt-4o-mini",
   messages,
   max_tokens = 1000,
-  temperature = 1* **UI の拡張**
-
+  temperature = 1
+```
+* **UI の拡張**
   Blazor コンポーネントを追加し、複数テーマ選択や生成履歴機能などを組み込むことも可能です
