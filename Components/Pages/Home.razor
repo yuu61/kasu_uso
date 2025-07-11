@@ -3,6 +3,7 @@
 @inject kasu_uso.Services.MetricsService MetricsService
 @inject IConfiguration Configuration
 @inject ILogger<Home> Logger
+@inject IJSRuntime JSRuntime
 @attribute [System.ComponentModel.Description("ja")]
 @implements IDisposable
 <PageTitle>カスの嘘ジェネレーター</PageTitle>
@@ -22,10 +23,10 @@
         <div class="menu-items @(IsMenuOpen ? "menu-open" : "")">
             <a href="@PayPalUrl" target="_blank" @onclick='() => RecordShareClick("paypal")'><img class="serviceico" src="/images/PayPal_Logo2014.svg" alt="paypal" /></a>
             <a href="@TwitterShareUrl" target="_blank" @onclick='() => RecordShareClick("twitter")'><img class="serviceico" src="/images/Logo_of_Twitter.svg" alt="Share to Twitter" /></a>
-            <a href="@facebookShareUrl" target="_blank" @onclick='() => RecordShareClick("facebook")'><img class="serviceico" src="/images/Facebook_Logo_Primary.png" alt="Share to Facebook" /></a>
-            <a href="https://www.instagram.com" target="_blank" @onclick='() => RecordShareClick("instagram")'><img class="serviceico" src="/images/Instagram_Glyph_Gradient.svg" alt="Share to Instagram" /></a>
-            <a href="https://www.reddit.com" target="_blank" @onclick='() => RecordShareClick("reddit")'><img class="serviceico" src="/images/Reddit_Icon_FullColor.svg" alt="Share to Reddit" /></a>
-            <a href="https://www.line.me" target="_blank" @onclick='() => RecordShareClick("line")'><img class="serviceico" src="/images/LINE_Brand_icon.png" alt="Share to LINE" /></a>
+            <a href="@FacebookShareUrl" target="_blank" @onclick='() => RecordShareClick("facebook")'><img class="serviceico" src="/images/Facebook_Logo_Primary.png" alt="Share to Facebook" /></a>
+            <a href="@InstagramShareUrl" target="_blank" @onclick="@(() => HandleInstagramShare())"><img class="serviceico" src="/images/Instagram_Glyph_Gradient.svg" alt="Share to Instagram" /></a>
+            <a href="@RedditShareUrl" target="_blank" @onclick='() => RecordShareClick("reddit")'><img class="serviceico" src="/images/Reddit_Icon_FullColor.svg" alt="Share to Reddit" /></a>
+            <a href="@LineShareUrl" target="_blank" @onclick='() => RecordShareClick("line")'><img class="serviceico" src="/images/LINE_Brand_icon.png" alt="Share to LINE" /></a>
         </div>
     </div>
 
@@ -83,6 +84,7 @@
     private readonly System.Diagnostics.Stopwatch _pageLoadStopwatch = new();
 
     private string PayPalUrl { get; } = "https://www.paypal.com/paypalme/yuu2461";
+    
     private string _TwitterShareUrl = "https://twitter.com/tukushityann";
     private string TwitterShareUrl
     {
@@ -97,8 +99,9 @@
             return $"https://twitter.com/intent/tweet?text={encodedResponse}%0Ahttps://tukushityann.net%0A%23カスの嘘ジェネレーター&via=tukushityann";
         }
     }
+    
     private string _facebookShareUrl = "https://www.facebook.com/sharer/sharer.php?u=https://tukushityann.net&hashtag=%23カスの嘘ジェネレーター";
-    private string facebookShareUrl
+    private string FacebookShareUrl
     {
         get
         {
@@ -111,7 +114,48 @@
             return $"https://www.facebook.com/sharer/sharer.php?u=https://tukushityann.net&quote={encodedResponse}&hashtag=%23カスの嘘ジェネレーター";
         }
     }
+    
+    private string _instagramShareUrl = "https://www.instagram.com/tukushityan/";
+    private string InstagramShareUrl
+    {
+        get
+        {
+            // InstagramはWebからの直接投稿ができないため、プロフィールページに誘導
+            // コンテンツがある場合はクリップボードにコピーするためのJavaScript実行を検討
+            return _instagramShareUrl;
+        }
+    }
+    
+    private string _redditShareUrl = "https://www.reddit.com/submit?url=https://tukushityann.net&title=カスの嘘ジェネレーター";
+    private string RedditShareUrl
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(ChatResponse))
+            {
+                return _redditShareUrl;
+            }
+            var responseWithLineBreaks = ChatResponse.Replace("<br>", "\n");
+            var encodedResponse = Uri.EscapeDataString(responseWithLineBreaks);
+            return $"https://www.reddit.com/submit?url=https://tukushityann.net&title={encodedResponse}&sr=all";
+        }
+    }
 
+    private string _lineShareUrl = "https://social-plugins.line.me/lineit/share?url=https://tukushityann.net";
+    private string LineShareUrl
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(ChatResponse))
+            {
+                return _lineShareUrl;
+            }
+            var responseWithLineBreaks = ChatResponse.Replace("<br>", "\n");
+            var encodedResponse = Uri.EscapeDataString(responseWithLineBreaks);
+            var encodedUrl = Uri.EscapeDataString("https://tukushityann.net");
+            return $"https://social-plugins.line.me/lineit/share?url={encodedUrl}&text={encodedResponse}";
+        }
+    }
 
     private string ChatResponse { get; set; } = string.Empty;
     private string Keyword { get; set; } = string.Empty;
@@ -310,6 +354,25 @@
     private void RecordShareClick(string platform)
     {
         MetricsService.RecordShareButtonClick(platform);
+    }
+
+    private async Task HandleInstagramShare()
+    {
+        RecordShareClick("instagram");
+        
+        if (!string.IsNullOrWhiteSpace(ChatResponse))
+        {
+            try
+            {
+                var textToCopy = ChatResponse.Replace("<br>", "\n") + "\n\nhttps://tukushityann.net\n#カスの嘘ジェネレーター";
+                await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", textToCopy);
+                await JSRuntime.InvokeVoidAsync("alert", "テキストをクリップボードにコピーしました！Instagramで投稿してください。");
+            }
+            catch (Exception)
+            {
+                // クリップボードAPIが利用できない場合はそのままInstagramページを開く
+            }
+        }
     }
 
     public void Dispose()
