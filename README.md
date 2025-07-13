@@ -61,9 +61,11 @@ Visual studioで動かすのが一番楽で速いと思います<br>
 誤りがある場合はよしなにしてください<br>
   ？？？「[ゆるしてよ～](https://youtu.be/jGWFDZ33UCU?si=eXK2HmKREVZIpQ3v)」
 
-1. リポジトリをクローンgit clone https://github.com/yuu61/kasu_uso.git
-  cd kasu_uso
-
+1. リポジトリをクローン
+```
+git clone https://github.com/yuu61/kasu_uso.git
+cd kasu_uso
+```
 3. .NETをインストール
 
 [.NET をインストールする](https://learn.microsoft.com/ja-jp/dotnet/core/install/)
@@ -121,7 +123,7 @@ info: Microsoft.Hosting.Lifetime[14]
   `Home.razor` 内の `systemPrompt`や`userPrompt`を編集することで、生成されるカスの噓の傾向を調整できます
   モデルの設定現在以下のようになっています
 ```
-model = "gpt-4o-mini",
+model = "gpt-o4-mini",
   messages,
   max_tokens = 1000,
   temperature = 1
