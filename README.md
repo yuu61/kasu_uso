@@ -1,4 +1,4 @@
-﻿# [カスの嘘ジェネレータ (KasuUso Generator)](https://tukushityann.net/)
+﻿# [カスの嘘ジェネレータ (KasuUso Generator)](https://www.tukushityann.net/)
 
 [発表スライド](https://docs.google.com/presentation/d/1MfaHd2M6ElZcYaiWHERlNSd227NUAcXuGQxoyaVsacw/edit?usp=sharing)
 

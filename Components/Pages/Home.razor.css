@@ -66,6 +66,24 @@ div {
     transform: scale(1.2);
 }
 
+.clipboard-button {
+    outline: none !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.clipboard-button:focus {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.clipboard-button:active {
+    outline: none !important;
+    border: none !important;
+}
+
 /* 共通ユーティリティ */
 .center-absolute {
     position: absolute;
@@ -213,6 +231,27 @@ div {
 .month-select:focus {
     outline: none;
     border-color: #007bff;
+}
+
+/* チェックマークアニメーション */
+.checkmark-animation {
+    animation: checkmark-bounce 0.3s ease-out;
+    color: #4CAF50;
+}
+
+@keyframes checkmark-bounce {
+    0% { 
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% { 
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+    100% { 
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 /* レスポンシブ対応 */
