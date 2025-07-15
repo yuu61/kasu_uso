@@ -6,6 +6,9 @@
 @inject IJSRuntime JSRuntime
 @attribute [System.ComponentModel.Description("ja")]
 @implements IDisposable
+@using System.Text.Json
+@using Microsoft.JSInterop
+
 <PageTitle>カスの嘘ジェネレーター</PageTitle>
 
 <link href="kasu_uso.styles.css" rel="stylesheet" />
@@ -149,32 +152,51 @@
     {
         RecordShareClick("Clipboard");
 
+        string textToCopy;
+        if (string.IsNullOrWhiteSpace(ChatResponse))
+        {
+            textToCopy = "https://www.tukushityann.net\n#カスの嘘ジェネレーター";
+        }
+        else
+        {
+            textToCopy = ChatResponse.Replace("<br>", "\n") + "\n\nhttps://www.tukushityann.net\n#カスの嘘ジェネレーター";
+        }
+
         try
         {
-            string textToCopy;
-            if (string.IsNullOrWhiteSpace(ChatResponse))
-            {
-                textToCopy = "https://www.tukushityann.net\n#カスの嘘ジェネレーター";
-            }
-            else
-            {
-                textToCopy = ChatResponse.Replace("<br>", "\n") + "\n\nhttps://www.tukushityann.net\n#カスの嘘ジェネレーター";
-            }
-            
             await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", textToCopy);
             
-            // チェックマークを表示
             _showCheckmark = true;
             StateHasChanged();
             
-            // 2秒後にチェックマークを非表示
             await Task.Delay(1500);
             _showCheckmark = false;
             StateHasChanged();
+            
+            Logger.LogInformation("クリップボードコピー成功");
+        }
+        catch (JSException jsEx)
+        {
+            Logger.LogWarning(jsEx, "JavaScript Clipboard APIエラー");
+            await ShowFallbackCopyMessage(textToCopy);
         }
         catch (Exception ex)
         {
             Logger.LogWarning(ex, "クリップボードコピーに失敗しました");
+            await ShowFallbackCopyMessage(textToCopy);
+        }
+    }
+
+    private async Task ShowFallbackCopyMessage(string text)
+    {
+        try
+        {
+            var message = $"コピーできませんでした。\n\n以下をタップして長押しでコピーしてください:\n\n{text}";
+            await JSRuntime.InvokeVoidAsync("alert", message);
+        }
+        catch
+        {
+            Logger.LogError("フォールバックメッセージの表示も失敗しました");
         }
     }
 
