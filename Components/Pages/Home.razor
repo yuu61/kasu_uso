@@ -100,67 +100,23 @@
     private string _sessionId = string.Empty;
     private readonly System.Diagnostics.Stopwatch _pageLoadStopwatch = new();
 
-    private string PayPalUrl { get; } = "https://www.paypal.com/paypalme/yuu2461";
+    private const string PayPalUrl = "https://www.paypal.com/paypalme/yuu2461";
+    private const string SiteUrl = "https://www.tukushityann.net";
+    private const string ShareHashtag = "#カスの嘘ジェネレーター";
+    private const string TwitterVia = "tukushityann";
+    private const string DefaultShareTitle = "カスの嘘ジェネレーター";
 
-    private string _TwitterShareUrl = "https://twitter.com/tukushityann";
-    private string TwitterShareUrl
-    {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(ChatResponse))
-            {
-                return _TwitterShareUrl;
-            }
-            var responseWithLineBreaks = ChatResponse.Replace("<br>", "\n");
-            var encodedResponse = Uri.EscapeDataString(responseWithLineBreaks);
-            return $"https://twitter.com/intent/tweet?text={encodedResponse}%0Ahttps://www.tukushityann.net%0A%23カスの嘘ジェネレーター&via=tukushityann";
-        }
-    }
+    private string TwitterShareUrl => $"https://twitter.com/intent/tweet?text={Uri.EscapeDataString(BuildShareText())}&via={TwitterVia}";
 
-    private string _redditShareUrl = "https://www.reddit.com/submit?url=https://www.tukushityann.net&title=カスの嘘ジェネレーター";
-    private string RedditShareUrl
-    {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(ChatResponse))
-            {
-                return _redditShareUrl;
-            }
-            var responseWithLineBreaks = ChatResponse.Replace("<br>", "\n");
-            var encodedResponse = Uri.EscapeDataString(responseWithLineBreaks);
-            return $"https://www.reddit.com/submit?url=https://www.tukushityann.net&title={encodedResponse}&sr=all";
-        }
-    }
+    private string RedditShareUrl => $"https://www.reddit.com/submit?url={Uri.EscapeDataString(SiteUrl)}&title={Uri.EscapeDataString(BuildShareTitle())}&sr=all";
 
-    private string _lineShareUrl = "https://social-plugins.line.me/lineit/share?url=https://www.tukushityann.net";
-    private string LineShareUrl
-    {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(ChatResponse))
-            {
-                return _lineShareUrl;
-            }
-            var responseWithLineBreaks = ChatResponse.Replace("<br>", "\n");
-            var encodedResponse = Uri.EscapeDataString(responseWithLineBreaks);
-            var encodedUrl = Uri.EscapeDataString("https://www.tukushityann.net");
-            return $"https://social-plugins.line.me/lineit/share?url={encodedUrl}&text={encodedResponse}";
-        }
-    }
+    private string LineShareUrl => $"https://social-plugins.line.me/lineit/share?url={Uri.EscapeDataString(SiteUrl)}&text={Uri.EscapeDataString(BuildShareText())}";
 
     private async Task Copyclipboard()
     {
         RecordShareClick("Clipboard");
 
-        string textToCopy;
-        if (string.IsNullOrWhiteSpace(ChatResponse))
-        {
-            textToCopy = "https://www.tukushityann.net\n#カスの嘘ジェネレーター";
-        }
-        else
-        {
-            textToCopy = ChatResponse.Replace("<br>", "\n") + "\n\nhttps://www.tukushityann.net\n#カスの嘘ジェネレーター";
-        }
+        var textToCopy = BuildShareText();
 
         try
         {
@@ -275,6 +231,37 @@
     private void RecordShareClick(string platform)
     {
         MetricsService.RecordShareButtonClick(platform);
+    }
+
+    private string BuildShareText()
+    {
+        var message = string.IsNullOrWhiteSpace(ChatResponse)
+            ? string.Empty
+            : ChatResponse.Replace("<br>", "\n").Trim();
+
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            parts.Add(message);
+        }
+        parts.Add(SiteUrl);
+        parts.Add(ShareHashtag);
+
+        return string.Join("\n", parts);
+    }
+
+    private string BuildShareTitle()
+    {
+        var firstLine = BuildShareText()
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .FirstOrDefault();
+
+        if (string.IsNullOrWhiteSpace(firstLine))
+        {
+            return DefaultShareTitle;
+        }
+
+        return firstLine.Length > 300 ? firstLine[..300] : firstLine;
     }
 
     public void Dispose()
