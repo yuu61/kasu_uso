@@ -12,6 +12,7 @@ builder.Services.AddControllers();
 
 // Prometheusメトリクスサービスを追加
 builder.Services.AddSingleton<MetricsService>();
+builder.Services.AddScoped<KasuUsoService>();
 
 builder.Services.AddHttpClient("OpenAI", client =>
 {
