@@ -1,7 +1,6 @@
+using System.ClientModel;
 using System.Diagnostics;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
+using OpenAI.Chat;
 
 namespace kasu_uso.Services;
 
@@ -10,21 +9,19 @@ public class KasuUsoService
     private const string Model = "gpt-4.1-mini";
 
     private readonly IConfiguration _configuration;
-    private readonly IHttpClientFactory _httpClientFactory;
     private readonly MetricsService _metricsService;
     private readonly ILogger<KasuUsoService> _logger;
 
     private string? _apiKey;
     private bool _apiKeyLoaded;
+    private ChatClient? _chatClient;
 
     public KasuUsoService(
         IConfiguration configuration,
-        IHttpClientFactory httpClientFactory,
         MetricsService metricsService,
         ILogger<KasuUsoService> logger)
     {
         _configuration = configuration;
-        _httpClientFactory = httpClientFactory;
         _metricsService = metricsService;
         _logger = logger;
     }
@@ -46,6 +43,11 @@ public class KasuUsoService
                 {
                     _apiKey = (await File.ReadAllTextAsync(path)).Trim();
                 }
+            }
+
+            if (!string.IsNullOrWhiteSpace(_apiKey))
+            {
+                _chatClient = new ChatClient(Model, _apiKey);
             }
         }
         catch (Exception ex)
@@ -75,69 +77,46 @@ public class KasuUsoService
         _metricsService.IncrementMessagesSent();
 
         var stopwatch = Stopwatch.StartNew();
-        var client = _httpClientFactory.CreateClient("OpenAI");
 
-        var payload = new
+        var messages = new List<ChatMessage>
         {
-            model = Model,
-            messages = new[]
-            {
-                new { role = "system", content = BuildSystemPrompt(selectedMonth) },
-                new { role = "user", content = $"キーワード: {keyword}" }
-            },
-            max_tokens = 1000,
-            temperature = 1
+            new SystemChatMessage(BuildSystemPrompt(selectedMonth)),
+            new UserChatMessage($"キーワード: {keyword}")
         };
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions")
+        var options = new ChatCompletionOptions
         {
-            Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
+            MaxOutputTokenCount = 1000,
+            Temperature = 1
         };
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 
         try
         {
+            var client = _chatClient ??= new ChatClient(Model, apiKey);
+
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             linkedCts.CancelAfter(TimeSpan.FromSeconds(30));
 
-            using var response = await client.SendAsync(request, linkedCts.Token);
+            var completionResult = await client.CompleteChatAsync(messages, options, linkedCts.Token);
             stopwatch.Stop();
 
-            if (response.IsSuccessStatusCode)
-            {
-                _metricsService.RecordOpenAiApiCall("success", Model, stopwatch.Elapsed.TotalSeconds);
+            _metricsService.RecordOpenAiApiCall("success", Model, stopwatch.Elapsed.TotalSeconds);
 
-                await using var stream = await response.Content.ReadAsStreamAsync(linkedCts.Token);
-                var doc = await JsonDocument.ParseAsync(stream, cancellationToken: linkedCts.Token);
-                var content = doc.RootElement
-                    .GetProperty("choices")[0]
-                    .GetProperty("message")
-                    .GetProperty("content")
-                    .GetString() ?? string.Empty;
+            var completion = completionResult.Value;
+            var content = completion.Content.Count > 0
+                ? completion.Content[0].Text ?? string.Empty
+                : string.Empty;
 
-                return KasuUsoResult.Success(content);
-            }
-
+            return KasuUsoResult.Success(content);
+        }
+        catch (ClientResultException ex)
+        {
+            stopwatch.Stop();
+            var statusCodeLabel = $"http_{ex.Status}";
             _metricsService.RecordOpenAiApiCall("error", Model, stopwatch.Elapsed.TotalSeconds);
-            var statusCodeLabel = $"http_{(int)response.StatusCode}";
             _metricsService.RecordOpenAiApiError(statusCodeLabel);
-
-            return KasuUsoResult.Failed($"APIエラー: {response.StatusCode}", statusCodeLabel);
-        }
-        catch (HttpRequestException ex)
-        {
-            stopwatch.Stop();
-            _metricsService.RecordOpenAiApiCall("error", "unknown", stopwatch.Elapsed.TotalSeconds);
-            _metricsService.RecordOpenAiApiError("http_request_exception");
-            _logger.LogError(ex, "OpenAI APIへの送信中に通信エラーが発生しました");
-            return KasuUsoResult.Failed($"通信エラー: {ex.Message}", "http_request_exception");
-        }
-        catch (JsonException ex)
-        {
-            stopwatch.Stop();
-            _metricsService.RecordOpenAiApiError("json_parse_error");
-            _logger.LogError(ex, "OpenAI APIレスポンスの解析に失敗しました");
-            return KasuUsoResult.Failed($"レスポンス解析エラー: {ex.Message}", "json_parse_error");
+            _logger.LogError(ex, "OpenAI APIへの送信中にエラー応答が返されました");
+            return KasuUsoResult.Failed($"APIエラー: {ex.Message}", statusCodeLabel);
         }
         catch (TaskCanceledException)
         {

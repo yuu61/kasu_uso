@@ -14,11 +14,6 @@ builder.Services.AddControllers();
 builder.Services.AddSingleton<MetricsService>();
 builder.Services.AddScoped<KasuUsoService>();
 
-builder.Services.AddHttpClient("OpenAI", client =>
-{
-    client.BaseAddress = new Uri("https://api.openai.com/");
-});
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

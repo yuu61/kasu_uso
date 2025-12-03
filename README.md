@@ -16,7 +16,7 @@
 - **カスタムプロンプト対応**：ユーザーが設定したテーマやキーワードに基づきカスの嘘を生成  
 - **シンプルな UI** <!--物は言いよう--> ：Blazorベースの画面で入力→生成をワンストップ  
 - **API キー管理**：ローカルファイル（`API_KEY.credential`）に格納したキーを自動読み込み  
-- **非同期処理**：`HttpClient` と非同期メソッドで快適なレスポンス  
+- **OpenAI公式クライアント**：`OpenAI .NET` (ファーストパーティ) の非同期APIで快適なレスポンス  
 - **Prometheusメトリクス**：セッション数、API呼び出し回数、パフォーマンス指標を収集
 
 ## Prometheusメトリクス
@@ -123,10 +123,9 @@ info: Microsoft.Hosting.Lifetime[14]
   `Home.razor` 内の `systemPrompt`や`userPrompt`を編集することで、生成されるカスの噓の傾向を調整できます
   モデルの設定現在以下のようになっています
 ```
-model = "gpt-o4-mini",
-  messages,
-  max_tokens = 1000,
-  temperature = 1
+model = "gpt-4.1-mini",
+max_output_token_count = 1000,
+temperature = 1
 ```
 * **UI の拡張**
   Blazor コンポーネントを追加し、複数テーマ選択や生成履歴機能などを組み込むことも可能です
