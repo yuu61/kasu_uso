@@ -116,19 +116,14 @@
     {
         RecordShareClick("Clipboard");
 
-        var textToCopy = BuildShareText();
+        var textToCopy = BuildClipboardText();
 
         try
         {
-            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", textToCopy);
-            
-            _showCheckmark = true;
-            StateHasChanged();
-            
-            await Task.Delay(1500);
-            _showCheckmark = false;
-            StateHasChanged();
-            
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", cts.Token, textToCopy);
+
+            await ShowCopySuccessAsync();
             Logger.LogInformation("クリップボードコピー成功");
         }
         catch (JSException jsEx)
@@ -140,6 +135,22 @@
         {
             Logger.LogWarning(ex, "クリップボードコピーに失敗しました");
             await ShowFallbackCopyMessage(textToCopy);
+        }
+    }
+
+    private async Task ShowCopySuccessAsync()
+    {
+        _showCheckmark = true;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(1500);
+        }
+        finally
+        {
+            _showCheckmark = false;
+            StateHasChanged();
         }
     }
 
@@ -248,6 +259,12 @@
         parts.Add(ShareHashtag);
 
         return string.Join("\n", parts);
+    }
+
+    private string BuildClipboardText()
+    {
+        var text = BuildShareText();
+        return string.IsNullOrWhiteSpace(text) ? $"{SiteUrl}{Environment.NewLine}{ShareHashtag}" : text.Replace("\n", Environment.NewLine);
     }
 
     private string BuildShareTitle()
