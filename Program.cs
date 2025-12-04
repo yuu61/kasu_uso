@@ -12,11 +12,7 @@ builder.Services.AddControllers();
 
 // Prometheusメトリクスサービスを追加
 builder.Services.AddSingleton<MetricsService>();
-
-builder.Services.AddHttpClient("OpenAI", client =>
-{
-    client.BaseAddress = new Uri("https://api.openai.com/");
-});
+builder.Services.AddScoped<KasuUsoService>();
 
 var app = builder.Build();
 
