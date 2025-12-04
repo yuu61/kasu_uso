@@ -86,8 +86,7 @@ public class KasuUsoService
 
         var options = new ChatCompletionOptions
         {
-            MaxOutputTokenCount = 1000,
-            Temperature = 1
+            MaxOutputTokenCount = 1000
         };
 
         try
