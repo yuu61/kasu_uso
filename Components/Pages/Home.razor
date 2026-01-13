@@ -10,8 +10,6 @@
 
 <PageTitle>カスの嘘ジェネレーター</PageTitle>
 
-<link href="kasu_uso.styles.css" rel="stylesheet" />
-
 <div class="container">
     <div class="service-icons">
         <!-- ハンバーガーメニューボタン（モバイル用） -->
@@ -55,7 +53,7 @@
     <div class="response-container">
         @if (!string.IsNullOrEmpty(ChatResponse))
         {
-            <a>@((MarkupString)ChatResponse)</a>
+            <a>@((MarkupString)SanitizeResponse(ChatResponse))</a>
         }
     </div>
 
@@ -99,6 +97,28 @@
 @code {
     private string _sessionId = string.Empty;
     private readonly System.Diagnostics.Stopwatch _pageLoadStopwatch = new();
+
+    /// <summary>
+    /// APIレスポンスをサニタイズし、<br>タグのみを許可する
+    /// </summary>
+    private static string SanitizeResponse(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return string.Empty;
+
+        // <br>タグを一時的なプレースホルダーに置換
+        const string brPlaceholder = "{{BR_PLACEHOLDER}}";
+        var sanitized = input
+            .Replace("<br>", brPlaceholder, StringComparison.OrdinalIgnoreCase)
+            .Replace("<br/>", brPlaceholder, StringComparison.OrdinalIgnoreCase)
+            .Replace("<br />", brPlaceholder, StringComparison.OrdinalIgnoreCase);
+
+        // HTMLエンコード（XSS対策）
+        sanitized = System.Net.WebUtility.HtmlEncode(sanitized);
+
+        // <br>タグを復元
+        return sanitized.Replace(brPlaceholder, "<br>");
+    }
 
     private const string PayPalUrl = "https://www.paypal.com/paypalme/yuu2461";
     private const string SiteUrl = "https://www.tukushityann.net";
