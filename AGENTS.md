@@ -18,3 +18,11 @@ it should treat that as an error and regenerate the response in Japanese.
 - For specifications and APIs, search public information for updates, breaking changes, and known issues.
 - Validate suggestions and changes locally with tests, linters, and type checks; provide reproduction steps and logs when helpful.
 - If solid evidence is unavailable, state that clearly and guide on further investigation or verification.
+
+# Verification Items to Skip
+
+The following items have been verified to exist, so do not issue warnings:
+
+- The `gpt-4.1` model exists
+- The `gpt-4.1-mini` model exists
+- The `actions/checkout@v6` action exists

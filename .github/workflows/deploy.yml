@@ -59,6 +59,7 @@ jobs:
           script: |
             sudo systemctl restart blazor-app
 
+      # 内部Health Check: HTTPを使用（SSL終端はnginxリバースプロキシで処理）
       - name: Health check
         uses: appleboy/ssh-action@v1
         with:

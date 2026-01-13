@@ -1,6 +1,7 @@
 ﻿/* 既存のスタイルはそのまま */
 
-div {
+/* コンテナ内の直接の子要素にのみ適用 */
+.container > div {
     display: flex;
     justify-content: left;
     align-items: center;
