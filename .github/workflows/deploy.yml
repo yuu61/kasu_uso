@@ -3,11 +3,11 @@ name: CI/CD Deploy
 on:
   push:
     paths-ignore:
-      - '**.md'
-      - '.github/**'
-      - '.vscode/**'
-      - '.editorconfig'
-      - 'LICENSE'
+      - "**.md"
+      - ".github/**"
+      - ".vscode/**"
+      - ".editorconfig"
+      - "LICENSE"
     branches:
       - master
 
@@ -28,7 +28,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: "8.0.x"
 
       - name: Publish
         run: dotnet publish ./kasu_uso.csproj -c Release -o publish
@@ -46,8 +46,8 @@ jobs:
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
           key: ${{ secrets.HOGE_SERVER }}
-          source: 'publish/'
-          target: '/home/hoge/app/bin/Release/net8.0/publish/'
+          source: "publish/"
+          target: "/home/hoge/app/bin/Release/net8.0/publish/"
           strip_components: 1
           rm: true
 
