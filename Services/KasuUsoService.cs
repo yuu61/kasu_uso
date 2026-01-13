@@ -102,12 +102,11 @@ public class KasuUsoService
 
         try
         {
-            var client = _chatClient ??= new ChatClient(Model, apiKey);
-
+            // _chatClient は EnsureApiKeyAsync() で初期化済み
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             linkedCts.CancelAfter(TimeSpan.FromSeconds(30));
 
-            var completionResult = await client.CompleteChatAsync(messages, options, linkedCts.Token);
+            var completionResult = await _chatClient!.CompleteChatAsync(messages, options, linkedCts.Token);
             stopwatch.Stop();
 
             _metricsService.RecordOpenAiApiCall("success", Model, stopwatch.Elapsed.TotalSeconds);

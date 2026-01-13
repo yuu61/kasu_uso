@@ -100,6 +100,11 @@
     private bool _isBot = false;
     private readonly System.Diagnostics.Stopwatch _pageLoadStopwatch = new();
 
+    // <br>タグの各バリエーションにマッチする正規表現
+    private static readonly System.Text.RegularExpressions.Regex BrTagPattern = new(
+        @"<br\s*/?>",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
+
     /// <summary>
     /// APIレスポンスをサニタイズし、<br>タグのみを許可する
     /// </summary>
@@ -110,10 +115,7 @@
 
         // <br>タグを一時的なプレースホルダーに置換
         const string brPlaceholder = "{{BR_PLACEHOLDER}}";
-        var sanitized = input
-            .Replace("<br>", brPlaceholder, StringComparison.OrdinalIgnoreCase)
-            .Replace("<br/>", brPlaceholder, StringComparison.OrdinalIgnoreCase)
-            .Replace("<br />", brPlaceholder, StringComparison.OrdinalIgnoreCase);
+        var sanitized = BrTagPattern.Replace(input, brPlaceholder);
 
         // HTMLエンコード（XSS対策）
         sanitized = System.Net.WebUtility.HtmlEncode(sanitized);
@@ -231,11 +233,11 @@
         _isBot = MetricsService.IsBot(userAgent);
 
         // ボットでない場合のみセッションをカウント
-        if (!_isBot)
+        RecordIfHuman(() =>
         {
             _sessionId = Guid.NewGuid().ToString();
             MetricsService.IncrementActiveSession(_sessionId);
-        }
+        });
 
         try
         {
@@ -244,11 +246,7 @@
         finally
         {
             _pageLoadStopwatch.Stop();
-            // ボットでない場合のみページロード時間を記録
-            if (!_isBot)
-            {
-                MetricsService.RecordPageLoadTime(_pageLoadStopwatch.Elapsed.TotalSeconds);
-            }
+            RecordIfHuman(() => MetricsService.RecordPageLoadTime(_pageLoadStopwatch.Elapsed.TotalSeconds));
         }
     }
 
@@ -267,20 +265,22 @@
         }
     }
 
+    /// <summary>
+    /// ボットでない場合のみアクションを実行する共通ヘルパー
+    /// </summary>
+    private void RecordIfHuman(Action action)
+    {
+        if (!_isBot) action();
+    }
+
     private void OnMonthSelectionChanged()
     {
-        if (!_isBot)
-        {
-            MetricsService.RecordMonthSelection(SelectedMonth);
-        }
+        RecordIfHuman(() => MetricsService.RecordMonthSelection(SelectedMonth));
     }
 
     private void RecordShareClick(string platform)
     {
-        if (!_isBot)
-        {
-            MetricsService.RecordShareButtonClick(platform);
-        }
+        RecordIfHuman(() => MetricsService.RecordShareButtonClick(platform));
     }
 
     private string BuildShareText()

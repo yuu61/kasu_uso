@@ -98,6 +98,36 @@ public class MetricsService : IDisposable
         "network_error"
     };
 
+    /// <summary>
+    /// 永続化用Dictionaryの値をインクリメントする共通ヘルパー
+    /// </summary>
+    private void IncrementPersistValue(Dictionary<string, long> dict, string key)
+    {
+        lock (_persistLock)
+        {
+            dict.TryGetValue(key, out var current);
+            dict[key] = current + 1;
+        }
+    }
+
+    /// <summary>
+    /// 単一ラベルのカウンターを復元する共通ヘルパー
+    /// </summary>
+    private static void RestoreLabeledCounter(
+        Dictionary<string, long>? source,
+        Dictionary<string, long> target,
+        Counter counter)
+    {
+        if (source == null) return;
+
+        foreach (var kvp in source)
+        {
+            target[kvp.Key] = kvp.Value;
+            if (kvp.Value > 0)
+                counter.WithLabels(kvp.Key).Inc(kvp.Value);
+        }
+    }
+
     public MetricsService(ILogger<MetricsService> logger, IConfiguration configuration)
     {
         _logger = logger;
@@ -151,24 +181,13 @@ public class MetricsService : IDisposable
     {
         _openaiApiCallsCounter.WithLabels(status, model).Inc();
         _openaiApiDuration.Observe(durationSeconds);
-
-        var key = $"{status}|{model}";
-        lock (_persistLock)
-        {
-            _openaiApiCallsValues.TryGetValue(key, out var current);
-            _openaiApiCallsValues[key] = current + 1;
-        }
+        IncrementPersistValue(_openaiApiCallsValues, $"{status}|{model}");
     }
 
     public void RecordOpenAiApiError(string errorType)
     {
         _openaiApiErrorsCounter.WithLabels(errorType).Inc();
-
-        lock (_persistLock)
-        {
-            _openaiApiErrorsValues.TryGetValue(errorType, out var current);
-            _openaiApiErrorsValues[errorType] = current + 1;
-        }
+        IncrementPersistValue(_openaiApiErrorsValues, errorType);
     }
 
     // ユーザー操作関連メソッド
@@ -194,37 +213,21 @@ public class MetricsService : IDisposable
     {
         // ラベルカーディナリティ制御: 許可されたエラータイプのみ記録
         var normalizedErrorType = AllowedErrorTypes.Contains(errorType) ? errorType : "unknown_error";
-
         _errorCounter.WithLabels(normalizedErrorType).Inc();
-
-        lock (_persistLock)
-        {
-            _errorValues.TryGetValue(normalizedErrorType, out var current);
-            _errorValues[normalizedErrorType] = current + 1;
-        }
+        IncrementPersistValue(_errorValues, normalizedErrorType);
     }
 
     // ビジネスメトリクス関連メソッド
     public void RecordMonthSelection(string month)
     {
         _monthSelectionCounter.WithLabels(month).Inc();
-
-        lock (_persistLock)
-        {
-            _monthSelectionValues.TryGetValue(month, out var current);
-            _monthSelectionValues[month] = current + 1;
-        }
+        IncrementPersistValue(_monthSelectionValues, month);
     }
 
     public void RecordShareButtonClick(string platform)
     {
         _shareButtonClicksCounter.WithLabels(platform).Inc();
-
-        lock (_persistLock)
-        {
-            _shareButtonClicksValues.TryGetValue(platform, out var current);
-            _shareButtonClicksValues[platform] = current + 1;
-        }
+        IncrementPersistValue(_shareButtonClicksValues, platform);
     }
 
     // 利用可能なメトリクス情報を取得
@@ -272,7 +275,7 @@ public class MetricsService : IDisposable
             if (state.GenerateButtonClicks > 0)
                 _generateButtonClicksCounter.Inc(state.GenerateButtonClicks);
 
-            // ラベル付きカウンターを復元
+            // ラベル付きカウンターを復元（2ラベル: status|model）
             if (state.OpenAiApiCalls != null)
             {
                 foreach (var kvp in state.OpenAiApiCalls)
@@ -284,45 +287,11 @@ public class MetricsService : IDisposable
                 }
             }
 
-            if (state.OpenAiApiErrors != null)
-            {
-                foreach (var kvp in state.OpenAiApiErrors)
-                {
-                    _openaiApiErrorsValues[kvp.Key] = kvp.Value;
-                    if (kvp.Value > 0)
-                        _openaiApiErrorsCounter.WithLabels(kvp.Key).Inc(kvp.Value);
-                }
-            }
-
-            if (state.Errors != null)
-            {
-                foreach (var kvp in state.Errors)
-                {
-                    _errorValues[kvp.Key] = kvp.Value;
-                    if (kvp.Value > 0)
-                        _errorCounter.WithLabels(kvp.Key).Inc(kvp.Value);
-                }
-            }
-
-            if (state.MonthSelections != null)
-            {
-                foreach (var kvp in state.MonthSelections)
-                {
-                    _monthSelectionValues[kvp.Key] = kvp.Value;
-                    if (kvp.Value > 0)
-                        _monthSelectionCounter.WithLabels(kvp.Key).Inc(kvp.Value);
-                }
-            }
-
-            if (state.ShareButtonClicks != null)
-            {
-                foreach (var kvp in state.ShareButtonClicks)
-                {
-                    _shareButtonClicksValues[kvp.Key] = kvp.Value;
-                    if (kvp.Value > 0)
-                        _shareButtonClicksCounter.WithLabels(kvp.Key).Inc(kvp.Value);
-                }
-            }
+            // 単一ラベルのカウンターを復元
+            RestoreLabeledCounter(state.OpenAiApiErrors, _openaiApiErrorsValues, _openaiApiErrorsCounter);
+            RestoreLabeledCounter(state.Errors, _errorValues, _errorCounter);
+            RestoreLabeledCounter(state.MonthSelections, _monthSelectionValues, _monthSelectionCounter);
+            RestoreLabeledCounter(state.ShareButtonClicks, _shareButtonClicksValues, _shareButtonClicksCounter);
 
             _logger.LogInformation("メトリクス状態を復元しました: {Path}", _metricsFilePath);
         }
