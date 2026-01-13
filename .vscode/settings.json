@@ -1,7 +1,6 @@
 {
   // Editor defaults
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
@@ -16,29 +15,20 @@
     "editor.defaultFormatter": "ms-dotnettools.csharp"
   },
 
-  // HTML
-  "[html]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-
-  // CSS
+  // Config/docs/styles - Prettier
   "[css]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-
-  // JSON
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[jsonc]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-
-  // JavaScript/TypeScript
-  "[javascript]": {
+  "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "[typescript]": {
+  "[yaml]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
 
