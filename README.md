@@ -63,7 +63,7 @@ Visual studioで動かすのが一番楽で速いと思います<br>
 
 ## インストールとセットアップ
 
-以下に`Ubuntu 24.04.2 LTS`での手順を説明します<br>
+以下に`Ubuntu 24.04 LTS`での手順を説明します<br>
 誤りがある場合はよしなにしてください<br>
 ？？？「[ゆるしてよ～](https://youtu.be/jGWFDZ33UCU?si=eXK2HmKREVZIpQ3v)」
 

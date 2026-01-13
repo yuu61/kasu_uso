@@ -4,7 +4,6 @@ on:
   push:
     paths-ignore:
       - "**.md"
-      - ".github/**"
       - ".vscode/**"
       - ".editorconfig"
       - "LICENSE"
@@ -14,7 +13,6 @@ on:
   pull_request:
     paths-ignore:
       - "**.md"
-      - ".github/**"
       - ".vscode/**"
       - ".editorconfig"
       - "LICENSE"
