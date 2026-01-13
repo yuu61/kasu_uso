@@ -366,3 +366,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /API_KEY.credential
+
+# Ignore Claude AI local files
+/.claude/
+tmpclaude-*-cwd
