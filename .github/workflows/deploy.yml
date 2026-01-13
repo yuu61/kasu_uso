@@ -4,53 +4,68 @@ on:
   push:
     paths-ignore:
       - '**.md'
-      - '.git**'
+      - '.github/**'
+      - '.vscode/**'
+      - '.editorconfig'
+      - 'LICENSE'
     branches:
       - master
-    
+
   workflow_dispatch:
-  
-  
-  
+
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+
+    env:
+      DEPLOY_HOST: tukushityann.net
+      DEPLOY_USER: hoge
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v5
-      with:
-        dotnet-version: '8.0.x'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
 
-    - name: Publish
-      run: dotnet publish ./kasu_uso.csproj -c Release -o publish
+      - name: Publish
+        run: dotnet publish ./kasu_uso.csproj -c Release -o publish
 
-    - name: Inject API credential
-      env:
-        API_CREDENTIAL: ${{ secrets.API_CREDENTIAL }}
-      run: | 
-        echo -n "$API_CREDENTIAL" > publish/API_KEY.credential
-        chmod 600 publish/API_KEY.credential
+      - name: Inject API credential
+        env:
+          API_CREDENTIAL: ${{ secrets.API_CREDENTIAL }}
+        run: |
+          echo -n "$API_CREDENTIAL" > publish/API_KEY.credential
+          chmod 600 publish/API_KEY.credential
 
-    - name: Copy files via SSH
-      uses: appleboy/scp-action@v1
-      with:
-        host: tukushityann.net
-        username: hoge
-        key: ${{ secrets.HOGE_SERVER }}
-        source: "publish/"
-        target: "/home/hoge/app/bin/Release/net8.0/publish/"
-        strip_components: 1
-        rm:  true
+      - name: Copy files via SSH
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ env.DEPLOY_HOST }}
+          username: ${{ env.DEPLOY_USER }}
+          key: ${{ secrets.HOGE_SERVER }}
+          source: 'publish/'
+          target: '/home/hoge/app/bin/Release/net8.0/publish/'
+          strip_components: 1
+          rm: true
 
-    - name: Restart service
-      uses: appleboy/ssh-action@v1
-      with:
-        host: tukushityann.net
-        username: hoge
-        key: ${{ secrets.HOGE_SERVER }}
-        script: |
-          sudo systemctl restart blazor-app
+      - name: Restart service
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ env.DEPLOY_HOST }}
+          username: ${{ env.DEPLOY_USER }}
+          key: ${{ secrets.HOGE_SERVER }}
+          script: |
+            sudo systemctl restart blazor-app
+
+      - name: Health check
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ env.DEPLOY_HOST }}
+          username: ${{ env.DEPLOY_USER }}
+          key: ${{ secrets.HOGE_SERVER }}
+          script: |
+            sleep 5
+            curl -f http://localhost:5000/health || exit 1
