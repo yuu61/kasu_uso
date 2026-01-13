@@ -1,13 +1,18 @@
 ﻿using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 using Prometheus;
 
 namespace kasu_uso.Services;
 
-public class MetricsService
+public class MetricsService : IDisposable
 {
-    private const string MetricsFilePath = "metrics_state.json";
+    private const string DefaultMetricsFilePath = "metrics_state.json";
+    private readonly string _metricsFilePath;
     private readonly object _persistLock = new();
+    private readonly ILogger<MetricsService> _logger;
+    private readonly Timer _autoSaveTimer;
+    private bool _disposed;
 
     // ボット/クローラー判定用の正規表現パターン
     private static readonly Regex BotPattern = new(
@@ -81,9 +86,39 @@ public class MetricsService
     private readonly Dictionary<string, long> _monthSelectionValues = new();
     private readonly Dictionary<string, long> _shareButtonClicksValues = new();
 
-    public MetricsService()
+    // 許可されたエラータイプのリスト（ラベルカーディナリティ制御用）
+    private static readonly HashSet<string> AllowedErrorTypes = new(StringComparer.OrdinalIgnoreCase)
     {
+        "api_key_load_error",
+        "missing_api_key",
+        "http_400", "http_401", "http_403", "http_404", "http_429", "http_500", "http_502", "http_503",
+        "timeout",
+        "unknown_error",
+        "validation_error",
+        "network_error"
+    };
+
+    public MetricsService(ILogger<MetricsService> logger, IConfiguration configuration)
+    {
+        _logger = logger;
+
+        // 設定からファイルパスを読み込み、未設定の場合はデフォルト値を使用
+        var configPath = configuration["Metrics:StatePath"];
+        if (!string.IsNullOrWhiteSpace(configPath))
+        {
+            _metricsFilePath = Path.IsPathRooted(configPath)
+                ? configPath
+                : Path.Combine(AppContext.BaseDirectory, configPath);
+        }
+        else
+        {
+            _metricsFilePath = Path.Combine(AppContext.BaseDirectory, DefaultMetricsFilePath);
+        }
+
         LoadState();
+
+        // 5分ごとに自動保存（異常終了時のデータ損失を軽減）
+        _autoSaveTimer = new Timer(_ => SaveStateInternal(), null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
     }
 
     // セッション関連メソッド
@@ -157,12 +192,15 @@ public class MetricsService
 
     public void RecordError(string errorType)
     {
-        _errorCounter.WithLabels(errorType).Inc();
+        // ラベルカーディナリティ制御: 許可されたエラータイプのみ記録
+        var normalizedErrorType = AllowedErrorTypes.Contains(errorType) ? errorType : "unknown_error";
+
+        _errorCounter.WithLabels(normalizedErrorType).Inc();
 
         lock (_persistLock)
         {
-            _errorValues.TryGetValue(errorType, out var current);
-            _errorValues[errorType] = current + 1;
+            _errorValues.TryGetValue(normalizedErrorType, out var current);
+            _errorValues[normalizedErrorType] = current + 1;
         }
     }
 
@@ -209,27 +247,30 @@ public class MetricsService
     {
         try
         {
-            if (!File.Exists(MetricsFilePath))
+            if (!File.Exists(_metricsFilePath))
+            {
+                _logger.LogInformation("メトリクス状態ファイルが存在しません: {Path}", _metricsFilePath);
                 return;
+            }
 
-            var json = File.ReadAllText(MetricsFilePath);
+            var json = File.ReadAllText(_metricsFilePath);
             var state = JsonSerializer.Deserialize<MetricsState>(json);
 
             if (state == null)
                 return;
 
-            // 単純なカウンターを復元
+            // 単純なカウンターを復元（Inc(value)で一括増加）
             _totalSessionsValue = state.TotalSessions;
-            for (var i = 0; i < state.TotalSessions; i++)
-                _totalSessionsCounter.Inc();
+            if (state.TotalSessions > 0)
+                _totalSessionsCounter.Inc(state.TotalSessions);
 
             _messagesSentValue = state.MessagesSent;
-            for (var i = 0; i < state.MessagesSent; i++)
-                _messagesSentCounter.Inc();
+            if (state.MessagesSent > 0)
+                _messagesSentCounter.Inc(state.MessagesSent);
 
             _generateButtonClicksValue = state.GenerateButtonClicks;
-            for (var i = 0; i < state.GenerateButtonClicks; i++)
-                _generateButtonClicksCounter.Inc();
+            if (state.GenerateButtonClicks > 0)
+                _generateButtonClicksCounter.Inc(state.GenerateButtonClicks);
 
             // ラベル付きカウンターを復元
             if (state.OpenAiApiCalls != null)
@@ -238,11 +279,8 @@ public class MetricsService
                 {
                     _openaiApiCallsValues[kvp.Key] = kvp.Value;
                     var parts = kvp.Key.Split('|');
-                    if (parts.Length == 2)
-                    {
-                        for (var i = 0; i < kvp.Value; i++)
-                            _openaiApiCallsCounter.WithLabels(parts[0], parts[1]).Inc();
-                    }
+                    if (parts.Length == 2 && kvp.Value > 0)
+                        _openaiApiCallsCounter.WithLabels(parts[0], parts[1]).Inc(kvp.Value);
                 }
             }
 
@@ -251,8 +289,8 @@ public class MetricsService
                 foreach (var kvp in state.OpenAiApiErrors)
                 {
                     _openaiApiErrorsValues[kvp.Key] = kvp.Value;
-                    for (var i = 0; i < kvp.Value; i++)
-                        _openaiApiErrorsCounter.WithLabels(kvp.Key).Inc();
+                    if (kvp.Value > 0)
+                        _openaiApiErrorsCounter.WithLabels(kvp.Key).Inc(kvp.Value);
                 }
             }
 
@@ -261,8 +299,8 @@ public class MetricsService
                 foreach (var kvp in state.Errors)
                 {
                     _errorValues[kvp.Key] = kvp.Value;
-                    for (var i = 0; i < kvp.Value; i++)
-                        _errorCounter.WithLabels(kvp.Key).Inc();
+                    if (kvp.Value > 0)
+                        _errorCounter.WithLabels(kvp.Key).Inc(kvp.Value);
                 }
             }
 
@@ -271,8 +309,8 @@ public class MetricsService
                 foreach (var kvp in state.MonthSelections)
                 {
                     _monthSelectionValues[kvp.Key] = kvp.Value;
-                    for (var i = 0; i < kvp.Value; i++)
-                        _monthSelectionCounter.WithLabels(kvp.Key).Inc();
+                    if (kvp.Value > 0)
+                        _monthSelectionCounter.WithLabels(kvp.Key).Inc(kvp.Value);
                 }
             }
 
@@ -281,22 +319,35 @@ public class MetricsService
                 foreach (var kvp in state.ShareButtonClicks)
                 {
                     _shareButtonClicksValues[kvp.Key] = kvp.Value;
-                    for (var i = 0; i < kvp.Value; i++)
-                        _shareButtonClicksCounter.WithLabels(kvp.Key).Inc();
+                    if (kvp.Value > 0)
+                        _shareButtonClicksCounter.WithLabels(kvp.Key).Inc(kvp.Value);
                 }
             }
+
+            _logger.LogInformation("メトリクス状態を復元しました: {Path}", _metricsFilePath);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"メトリクス状態の読み込みに失敗しました: {ex.Message}");
+            _logger.LogError(ex, "メトリクス状態の読み込みに失敗しました: {Path}", _metricsFilePath);
         }
     }
 
     /// <summary>
-    /// 現在のメトリクス状態をファイルに保存する
+    /// 現在のメトリクス状態をファイルに保存する（公開API）
     /// </summary>
     public void SaveState()
     {
+        SaveStateInternal();
+        _logger.LogInformation("メトリクス状態を保存しました: {Path}", _metricsFilePath);
+    }
+
+    /// <summary>
+    /// 現在のメトリクス状態をファイルに保存する（内部実装、定期保存用）
+    /// </summary>
+    private void SaveStateInternal()
+    {
+        if (_disposed) return;
+
         try
         {
             MetricsState state;
@@ -316,11 +367,36 @@ public class MetricsService
             }
 
             var json = JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(MetricsFilePath, json);
+
+            // 原子的書き込み: 一時ファイルに書き込んでからリネーム
+            var tempPath = _metricsFilePath + ".tmp";
+            File.WriteAllText(tempPath, json);
+            File.Move(tempPath, _metricsFilePath, overwrite: true);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"メトリクス状態の保存に失敗しました: {ex.Message}");
+            _logger.LogError(ex, "メトリクス状態の保存に失敗しました: {Path}", _metricsFilePath);
+        }
+    }
+
+    /// <summary>
+    /// リソースを解放する
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        _autoSaveTimer.Dispose();
+
+        // 終了時に最終保存
+        try
+        {
+            SaveStateInternal();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "終了時のメトリクス保存に失敗しました");
         }
     }
 }

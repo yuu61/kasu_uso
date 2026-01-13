@@ -20,11 +20,11 @@ var app = builder.Build();
 // シャットダウン時にメトリクスを保存
 var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
 var metricsService = app.Services.GetRequiredService<MetricsService>();
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
 lifetime.ApplicationStopping.Register(() =>
 {
-    Console.WriteLine("メトリクス状態を保存中...");
+    logger.LogInformation("アプリケーション終了中: メトリクス状態を保存します");
     metricsService.SaveState();
-    Console.WriteLine("メトリクス状態の保存が完了しました。");
 });
 
 // Configure the HTTP request pipeline.
