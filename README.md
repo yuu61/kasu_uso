@@ -13,10 +13,10 @@
 
 ## 主な機能
 
-- **カスタムプロンプト対応**：ユーザーが設定したテーマやキーワードに基づきカスの嘘を生成  
-- **シンプルな UI** <!--物は言いよう--> ：Blazorベースの画面で入力→生成をワンストップ  
-- **API キー管理**：ローカルファイル（`API_KEY.credential`）に格納したキーを自動読み込み  
-- **OpenAI公式クライアント**：`OpenAI .NET` (ファーストパーティ) の非同期APIで快適なレスポンス  
+- **カスタムプロンプト対応**：ユーザーが設定したテーマやキーワードに基づきカスの嘘を生成
+- **シンプルな UI** <!--物は言いよう--> ：Blazorベースの画面で入力→生成をワンストップ
+- **API キー管理**：ローカルファイル（`API_KEY.credential`）に格納したキーを自動読み込み
+- **OpenAI公式クライアント**：`OpenAI .NET` (ファーストパーティ) の非同期APIで快適なレスポンス
 - **Prometheusメトリクス**：セッション数、API呼び出し回数、パフォーマンス指標を収集
 
 ## Prometheusメトリクス
@@ -24,53 +24,62 @@
 アプリケーションでは以下のメトリクスを収集しています：
 
 ### セッション関連
+
 - `kasu_uso_active_sessions_total` - 現在のアクティブセッション数
 - `kasu_uso_sessions_total` - 総セッション数
 
 ### OpenAI API関連
+
 - `kasu_uso_openai_api_calls_total` - OpenAI API呼び出し回数（ステータス・モデル別)
 - `kasu_uso_openai_api_duration_seconds` - OpenAI API応答時間
 - `kasu_uso_openai_api_errors_total` - OpenAI APIエラー回数（エラータイプ別）
 
 ### ユーザー操作関連
+
 - `kasu_uso_messages_sent_total` - 送信されたメッセージ数
 - `kasu_uso_generate_button_clicks_total` - 生成ボタンクリック回数
 - `kasu_uso_month_selections_total` - 月選択回数（月別）
 - `kasu_uso_share_button_clicks_total` - シェアボタンクリック回数（プラットフォーム別）
 
 ### パフォーマンス関連
+
 - `kasu_uso_page_load_duration_seconds` - ページ読み込み時間
 - `kasu_uso_errors_total` - アプリケーションエラー回数（エラータイプ別）
 
 ### 標準HTTPメトリクス
+
 - `http_requests_total` - HTTPリクエスト総数
 - `http_request_duration_seconds` - HTTPリクエスト応答時間
 
 ## 必要環境
 
-- [.NET 8.0 SDK](https://dotnet.microsoft.com/) 以上  
-- C# 11.0  
-- OpenAI API アクセス権（OpenAI API キー）  
+- [.NET 8.0 SDK](https://dotnet.microsoft.com/) 以上
+- C# 11.0
+- OpenAI API アクセス権（OpenAI API キー）
 - Windows/macOS/Linux 上のターミナルまたは**Visual Studio 2022**／Visual Studio Code
 
 Visual studioで動かすのが一番楽で速いと思います<br>
 クローンしてAPIキー設定して`Ctrl + F5`するだけです
 
 ## インストールとセットアップ
-以下に`Ubuntu 24.04.2 LTS`での手順を説明します<br>
+
+以下に`Ubuntu 24.04 LTS`での手順を説明します<br>
 誤りがある場合はよしなにしてください<br>
-  ？？？「[ゆるしてよ～](https://youtu.be/jGWFDZ33UCU?si=eXK2HmKREVZIpQ3v)」
+？？？「[ゆるしてよ～](https://youtu.be/jGWFDZ33UCU?si=eXK2HmKREVZIpQ3v)」
 
 1. リポジトリをクローン
+
 ```
 git clone https://github.com/yuu61/kasu_uso.git
 cd kasu_uso
 ```
+
 3. .NETをインストール
 
 [.NET をインストールする](https://learn.microsoft.com/ja-jp/dotnet/core/install/)
 
 4. リポジトリのルートで以下コマンドを実行
+
 ```
 dotnet publish -c Release
 #実行結果
@@ -80,7 +89,9 @@ MSBuild version 17.8.27+3ab07f0cf for .NET
   kasu_uso -> /home/user/kasu_uso/bin/Release/net8.0/kasu_uso.dll
   kasu_uso -> /home/user/kasu_uso/bin/Release/net8.0/publish/
 ```
+
 5. `sudo vi /etc/systemd/system/blazor-app.service`で以下のファイルを作成<br>userの部分は`dotnet publish -c Release`の実行結果を参考に適宜書き換えてください
+
 ```
 [Unit]
 Description=Blazor Server App
@@ -98,12 +109,16 @@ SyslogIdentifier=blazor-app
 [Install]
 WantedBy=multi-user.target
 ```
+
 6. API キーの準備
-`/kasu_uso/bin/Release/net8.0/publish`に`API_KEY.credential`ファイルを作成し、OpenAI APIキーを１行で記述します
+   `/kasu_uso/bin/Release/net8.0/publish`に`API_KEY.credential`ファイルを作成し、OpenAI APIキーを１行で記述します
+
 ```
 sk-**************…
 ```
+
 7. 実行
+
 ```
 sudo systemctl daemon-reload
 # sudo systemctl enable blazor-app
@@ -115,17 +130,20 @@ user@ubuntu:~/kasu_uso$ dotnet run
 info: Microsoft.Hosting.Lifetime[14]
       Now listening on: http://localhost:xxxx
 ```
+
 `https://localhost:xxxx`にブラウザでアクセスすると、UIが表示されます
 
 ## カスタマイズ
 
-* **プロンプトの変更**  
+- **プロンプトの変更**  
   `Home.razor` 内の `systemPrompt`や`userPrompt`を編集することで、生成されるカスの噓の傾向を調整できます
   モデルの設定現在以下のようになっています
+
 ```
 model = "gpt-4.1-mini",
 max_output_token_count = 1000,
 temperature = 1
 ```
-* **UI の拡張**
+
+- **UI の拡張**
   Blazor コンポーネントを追加し、複数テーマ選択や生成履歴機能などを組み込むことも可能です

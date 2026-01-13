@@ -1,0 +1,52 @@
+name: CodeQL Analysis
+
+on:
+  push:
+    paths-ignore:
+      - "**.md"
+      - ".vscode/**"
+      - ".editorconfig"
+      - "LICENSE"
+    branches:
+      - master
+
+  pull_request:
+    paths-ignore:
+      - "**.md"
+      - ".vscode/**"
+      - ".editorconfig"
+      - "LICENSE"
+    branches:
+      - master
+
+jobs:
+  analyze:
+    runs-on: ubuntu-24.04
+
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: csharp
+          # security-and-quality: セキュリティ + コード品質の両方をチェック
+          queries: security-and-quality
+
+      - name: Build
+        run: dotnet build ./kasu_uso.csproj -c Release
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:csharp"
