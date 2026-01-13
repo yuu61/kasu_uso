@@ -42,9 +42,9 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
 
-  // Prettier settings
-  "prettier.singleQuote": true,
+  // Prettier settings (match CLI defaults)
+  "prettier.singleQuote": false,
   "prettier.semi": true,
   "prettier.tabWidth": 2,
-  "prettier.printWidth": 100
+  "prettier.printWidth": 80
 }
