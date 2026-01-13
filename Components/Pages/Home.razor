@@ -4,6 +4,7 @@
 @inject MetricsService MetricsService
 @inject ILogger<Home> Logger
 @inject IJSRuntime JSRuntime
+@inject IHttpContextAccessor HttpContextAccessor
 @attribute [System.ComponentModel.Description("ja")]
 @implements IDisposable
 @using Microsoft.JSInterop
@@ -96,6 +97,7 @@
 
 @code {
     private string _sessionId = string.Empty;
+    private bool _isBot = false;
     private readonly System.Diagnostics.Stopwatch _pageLoadStopwatch = new();
 
     /// <summary>
@@ -223,10 +225,17 @@
     protected override async Task OnInitializedAsync()
     {
         _pageLoadStopwatch.Start();
-        
-        // セッションIDを生成してメトリクスに記録
-        _sessionId = Guid.NewGuid().ToString();
-        MetricsService.IncrementActiveSession(_sessionId);
+
+        // ボット/クローラーを判定
+        var userAgent = HttpContextAccessor.HttpContext?.Request.Headers.UserAgent.ToString();
+        _isBot = MetricsService.IsBot(userAgent);
+
+        // ボットでない場合のみセッションをカウント
+        if (!_isBot)
+        {
+            _sessionId = Guid.NewGuid().ToString();
+            MetricsService.IncrementActiveSession(_sessionId);
+        }
 
         try
         {
@@ -235,7 +244,11 @@
         finally
         {
             _pageLoadStopwatch.Stop();
-            MetricsService.RecordPageLoadTime(_pageLoadStopwatch.Elapsed.TotalSeconds);
+            // ボットでない場合のみページロード時間を記録
+            if (!_isBot)
+            {
+                MetricsService.RecordPageLoadTime(_pageLoadStopwatch.Elapsed.TotalSeconds);
+            }
         }
     }
 
@@ -256,12 +269,18 @@
 
     private void OnMonthSelectionChanged()
     {
-        MetricsService.RecordMonthSelection(SelectedMonth);
+        if (!_isBot)
+        {
+            MetricsService.RecordMonthSelection(SelectedMonth);
+        }
     }
 
     private void RecordShareClick(string platform)
     {
-        MetricsService.RecordShareButtonClick(platform);
+        if (!_isBot)
+        {
+            MetricsService.RecordShareButtonClick(platform);
+        }
     }
 
     private string BuildShareText()

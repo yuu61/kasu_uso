@@ -9,12 +9,23 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
 
 // Prometheusメトリクスサービスを追加
 builder.Services.AddSingleton<MetricsService>();
 builder.Services.AddSingleton<KasuUsoService>();
 
 var app = builder.Build();
+
+// シャットダウン時にメトリクスを保存
+var lifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+var metricsService = app.Services.GetRequiredService<MetricsService>();
+lifetime.ApplicationStopping.Register(() =>
+{
+    Console.WriteLine("メトリクス状態を保存中...");
+    metricsService.SaveState();
+    Console.WriteLine("メトリクス状態の保存が完了しました。");
+});
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
