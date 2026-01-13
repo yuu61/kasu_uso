@@ -11,9 +11,10 @@ public class KasuUsoService
     private readonly IConfiguration _configuration;
     private readonly MetricsService _metricsService;
     private readonly ILogger<KasuUsoService> _logger;
+    private readonly SemaphoreSlim _initLock = new(1, 1);
 
     private string? _apiKey;
-    private bool _apiKeyLoaded;
+    private volatile bool _apiKeyLoaded;
     private ChatClient? _chatClient;
 
     public KasuUsoService(
@@ -28,13 +29,20 @@ public class KasuUsoService
 
     public async Task<string?> EnsureApiKeyAsync()
     {
+        // Double-checked locking pattern
         if (_apiKeyLoaded)
         {
             return _apiKey;
         }
 
+        await _initLock.WaitAsync();
         try
         {
+            if (_apiKeyLoaded)
+            {
+                return _apiKey;
+            }
+
             _apiKey = _configuration["OpenAI:ApiKey"];
             if (string.IsNullOrWhiteSpace(_apiKey))
             {
@@ -49,16 +57,19 @@ public class KasuUsoService
             {
                 _chatClient = new ChatClient(Model, _apiKey);
             }
+
+            _apiKeyLoaded = true;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "APIキーの読み込みに失敗しました");
             _metricsService.RecordError("api_key_load_error");
             _apiKey = string.Empty;
+            _apiKeyLoaded = true;
         }
         finally
         {
-            _apiKeyLoaded = true;
+            _initLock.Release();
         }
 
         return _apiKey;
@@ -120,6 +131,7 @@ public class KasuUsoService
         catch (TaskCanceledException)
         {
             stopwatch.Stop();
+            _metricsService.RecordOpenAiApiCall("timeout", Model, stopwatch.Elapsed.TotalSeconds);
             _metricsService.RecordOpenAiApiError("timeout");
             return KasuUsoResult.Failed("リクエストがタイムアウトしました。", "timeout");
         }

@@ -12,7 +12,7 @@ builder.Services.AddControllers();
 
 // Prometheusメトリクスサービスを追加
 builder.Services.AddSingleton<MetricsService>();
-builder.Services.AddScoped<KasuUsoService>();
+builder.Services.AddSingleton<KasuUsoService>();
 
 var app = builder.Build();
 
@@ -23,17 +23,20 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
+// HTTPSリダイレクトと静的ファイルはパイプラインの早い段階で
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
 app.UseRouting();
 
 // HTTPリクエストメトリクスを収集
 app.UseHttpMetrics();
 
+app.UseAntiforgery();
+
 app.MapMetrics();
 app.MapControllers();
-
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
